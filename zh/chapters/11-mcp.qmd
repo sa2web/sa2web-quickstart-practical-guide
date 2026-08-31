@@ -1,0 +1,136 @@
+# 开启 Sa2web MCP 访问
+
+## 目标
+
+让 Codex、Claude Code、Cursor 等支持 MCP 的 AI 客户端读取并操作 Sa2web 远程浏览器。
+
+## 准备
+
+- Node.js 20+；
+- 安装 `@sa2web/mcp`；
+- 准备智能体登录 URL；
+- 智能体账号已获得所需 SaaS、工作空间、内部站点和代理权限。
+
+智能体登录 URL 中的 `clientId` / `clientSecret` 必须按密钥处理。
+
+## 安装
+
+```bash
+npm install @sa2web/mcp -g
+npx playwright install --with-deps
+```
+
+
+
+安装后提供：
+
+```text
+sa2
+sa2-browser
+sa2-mcp
+```
+
+## 创建Agent用户
+
+进入：
+```text
+用户管理 > Agent 列表
+```
+
+添加一个新 Agent 用户，例如 `mcp-agent`，并保存, 如 @fig-add-agent 所示。
+
+![Sa2web 添加Agent用户](/images/add-agent.png){#fig-add-agent}
+
+这里的默认密码是用于人工手动登录前端(`https://<APP_DOMAIN>/app/login`)的功能,这个密码可以在用户列表里找到该Agent 用户进行修改，也可以登录前端页面后修改。 agent类型用户的用户名则默认都以`a`开头。
+
+添加以后，在Agent用户列表里可以查看刚添加的Agent用户，如 @fig-agent-list 所示。
+
+![Sa2web Agent用户列表](/images/agent-list.png){#fig-agent-list}
+
+然后可以复制该 Agent 用户的 `clientId` 和 `clientSecret`，用于 MCP 客户端配置。或者直接点击"![](/images/copy-agent-url.png){width=90px}"按钮，复制登录 URL。该URL类似如下：
+
+```text
+https://192.168.1.105/agent/login?clientId=6d0593b03fa748aa8dee7452ef6221c8&clientSecret=d985786d946e4826aadd07d579c59b06bf41a32aff4a415f8981070915d940a9
+```
+已经包含 `clientId` 和 `clientSecret`，可直接用于 MCP 客户端配置。
+
+## 给 Agent 用户授权
+
+进入:
+```text
+用户管理 > 分组列表
+```
+
+在分组列表页面，新建一个分组，例如名为 `agent`，如 @fig-agent-group 所示，点击"Users"按钮，给该分组添加用户，如上面的 `mcp-agent`用户，并保存。然后再给该分组授权所需的 SaaS、工作空间、内部站点和代理权限等。
+
+![Sa2web Agent分组](/images/agent-group.png){#fig-agent-group}
+
+
+然后再用新的浏览器打开上面的agent登录地址，如`https://192.168.1.105/agent/login?clientId=6d0593b03fa748aa8dee7452ef6221c8&clientSecret=d985786d946e4826aadd07d579c59b06bf41a32aff4a415f8981070915d940a9`。然后会路转到Sa2web首页，如 @fig-agent-auto-login 所示，然后查看该agent授权内容是否正确。
+
+![Sa2web Agent自动登录页面](/images/agent-auto-login.png){#fig-agent-auto-login}
+
+
+## MCP 客户端配置
+
+你可以根据相应使用的AI智能体客户端，编写相应格式配置，以下为范例：
+```json
+{
+  "mcpServers": {
+    "sa2-remote-browser": {
+      "command": "sa2-mcp",
+      "env": {
+        "SA2_LOGIN_URL": "https://<APP_DOMAIN>/agent/login?clientId=...&clientSecret=...",
+        "SA2_LOGIN_REDIRECT_PATH": "/app/login",
+        "SA2_HEADLESS": "false",
+        "SA2_IGNORE_HTTPS_ERRORS": "true"
+      }
+    }
+  }
+}
+```
+以下则以codex 桌面版为例，来说明如何添加sa2web mcp。点击codex里的`settings`菜单，打开设置界面，如 @fig-codex-add-mcp 所示，找到`Plugins`,打开Plugins页面，点击添加`Add MCP Server`:
+
+![Sa2web Codex添加Sa2web MCP](/images/codex-add-mcp.png){#fig-codex-add-mcp}
+
+
+接下来演示使用这个mcp,输入以下内容，将会使用sa2web mcp浏览工作空间里的站点并收集内容：
+```text
+Open the workspace 'demo2' using sa2-remote-browser, collect the main content of the page, and summarize it.
+```
+
+在发送消息出去，可以看到codex使用了sa2-remote-browser访问Sa2web目标站点，并收集了内容，如 @fig-mcp-demo 所示。
+
+![Sa2web Codex使用MCP演示结果](/images/mcp-demo.png){#fig-mcp-demo}
+
+::: {.callout-warning}
+不要把真实 `clientSecret` 提交到公开 Git 仓库、截图或公开工单。
+:::
+
+## AI 权限
+
+AI 账号仍受 Sa2web 权限体系控制，应只授权需要的：
+
+- SaaS 站点；
+- 工作空间；
+- 内部站点；
+- 网络 / 代理；
+- 其他必要权限。
+
+官方文档说明目标站点位于 `iframe#rbi-frame`，MCP Server 通过 Playwright 控制该 iframe，智能体不会直接访问目标网站。
+
+
+::: {.callout-warning}
+另外为避免AI泄露商业机密和隐私，可以提前在后台设置站点目标地址保护打开，以及涉及SaaS账号，公司机密的URL地址和关键词进行都进行隐藏或者拒绝访问。
+:::
+
+## 验收
+
+- [ ] `sa2-mcp` 在 PATH 中；
+- [ ] MCP 客户端能启动；
+- [ ] AI 只能看到授权资源，且能隐藏公司机密和需要隐藏的信息；
+
+
+参考文档：
+
+- https://www.sa2web.com/docs/zh/appendix/mcp

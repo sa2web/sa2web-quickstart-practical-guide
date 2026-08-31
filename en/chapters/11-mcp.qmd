@@ -1,0 +1,135 @@
+# Enable Sa2web MCP Access
+
+## Goal
+
+Let MCP-capable AI clients such as Codex, Claude Code, and Cursor read and operate Sa2web remote browsers.
+
+## Preparation
+
+- Node.js 20+.
+- Install `@sa2web/mcp`.
+- Prepare the agent login URL.
+- The agent account has the required SaaS, workspace, inner site, and proxy permissions.
+
+The `clientId` and `clientSecret` in the agent login URL must be treated as secrets.
+
+## Installation
+
+```bash
+npm install @sa2web/mcp -g
+npx playwright install --with-deps
+```
+
+After installation, these commands are available:
+
+```text
+sa2
+sa2-browser
+sa2-mcp
+```
+
+## Create an Agent User
+
+Go to:
+
+```text
+User Management > Agent List
+```
+
+Add a new Agent user, such as `mcp-agent`, and save, as shown in @fig-add-agent.
+
+![Sa2web add Agent user](/images/add-agent.png){#fig-add-agent}
+
+The default password here is for manual frontend login at `https://<APP_DOMAIN>/app/login`. You can change this password by finding the Agent user in the user list, or by logging in to the frontend and changing it there. Agent usernames start with `a` by default.
+
+After adding the user, you can see it in the Agent user list, as shown in @fig-agent-list.
+
+![Sa2web Agent user list](/images/agent-list.png){#fig-agent-list}
+
+Then copy the Agent user's `clientId` and `clientSecret` for MCP client configuration. You can also click the "![](/images/copy-agent-url.png){width=90px}" button to copy the login URL. The URL looks like this:
+
+```text
+https://192.168.1.105/agent/login?clientId=6d0593b03fa748aa8dee7452ef6221c8&clientSecret=d985786d946e4826aadd07d579c59b06bf41a32aff4a415f8981070915d940a9
+```
+
+It already contains `clientId` and `clientSecret`, so it can be used directly in MCP client configuration.
+
+## Authorize the Agent User
+
+Go to:
+
+```text
+User Management > Group List
+```
+
+On the group list page, create a new group, such as `agent`, as shown in @fig-agent-group. Click **Users**, add the Agent user such as `mcp-agent` to the group, and save. Then authorize the required SaaS, workspace, inner site, proxy, and other permissions for the group.
+
+![Sa2web Agent group](/images/agent-group.png){#fig-agent-group}
+
+Open the Agent login URL in a new browser, for example `https://192.168.1.105/agent/login?clientId=6d0593b03fa748aa8dee7452ef6221c8&clientSecret=d985786d946e4826aadd07d579c59b06bf41a32aff4a415f8981070915d940a9`. It redirects to the Sa2web home page, as shown in @fig-agent-auto-login. Confirm that the Agent's authorized content is correct.
+
+![Sa2web Agent auto-login page](/images/agent-auto-login.png){#fig-agent-auto-login}
+
+## MCP Client Configuration
+
+Write configuration in the format required by the AI agent client you use. Example:
+
+```json
+{
+  "mcpServers": {
+    "sa2-remote-browser": {
+      "command": "sa2-mcp",
+      "env": {
+        "SA2_LOGIN_URL": "https://<APP_DOMAIN>/agent/login?clientId=...&clientSecret=...",
+        "SA2_LOGIN_REDIRECT_PATH": "/app/login",
+        "SA2_HEADLESS": "false",
+        "SA2_IGNORE_HTTPS_ERRORS": "true"
+      }
+    }
+  }
+}
+```
+
+The following example uses Codex desktop to show how to add Sa2web MCP. Click the `settings` menu in Codex, open the settings screen, as shown in @fig-codex-add-mcp, find `Plugins`, open the Plugins page, and click **Add MCP Server**.
+
+![Add Sa2web MCP in Codex](/images/codex-add-mcp.png){#fig-codex-add-mcp}
+
+Next, try this MCP. Enter the following prompt to use Sa2web MCP to browse a workspace site and collect content:
+
+```text
+Open the workspace 'demo2' using sa2-remote-browser, collect the main content of the page, and summarize it.
+```
+
+After sending the message, Codex uses `sa2-remote-browser` to access the Sa2web target site and collect content, as shown in @fig-mcp-demo.
+
+![Sa2web MCP demo result in Codex](/images/mcp-demo.png){#fig-mcp-demo}
+
+::: {.callout-warning}
+Do not commit real `clientSecret` values to public Git repositories, screenshots, or public tickets.
+:::
+
+## AI Permissions
+
+AI accounts are still controlled by the Sa2web permission system. Grant only what is needed:
+
+- SaaS sites.
+- Workspaces.
+- Inner sites.
+- Network/proxy access.
+- Other necessary permissions.
+
+The official documentation states that the target site is located in `iframe#rbi-frame`; the MCP Server controls that iframe through Playwright, and the agent does not directly access the target website.
+
+::: {.callout-warning}
+To reduce the risk of AI exposing trade secrets or private data, enable target URL protection for sites in the backend in advance, and hide or block SaaS account information, company-secret URLs, and sensitive keywords.
+:::
+
+## Acceptance Checklist
+
+- [ ] `sa2-mcp` is in `PATH`.
+- [ ] The MCP client can start it.
+- [ ] The AI can only see authorized resources, and company secrets or information that must be hidden are hidden.
+
+References:
+
+- https://www.sa2web.com/docs/en/appendix/mcp

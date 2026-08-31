@@ -1,0 +1,78 @@
+# Enable Multi-Workspace Browsing
+
+## Goal
+
+Use workspaces to manage fixed business accounts, fixed browser environments, and multi-user collaborative access.
+
+When the same site needs multiple accounts or identities, create multiple workspaces for that site. When frontend users enter different workspaces, they are effectively using different remote browser environments and accounts.
+
+## Plan Workspaces
+
+You can divide workspaces by region, business line, store, or customer, for example:
+
+```text
+E-Commerce US A
+E-Commerce US B
+E-Commerce EU C
+```
+
+This lets different workspaces log in to the same site with different accounts and avoids account conflicts.
+
+## Create a Workspace
+
+Prerequisites: the site has been created and you have the **Workspace Management** permission.
+
+Go to:
+
+```text
+Workspace Management > Workspace List
+```
+
+The workspace list is displayed, as shown in @fig-workspace-list.
+
+![Sa2web workspace list](/images/workspace-list.png){#fig-workspace-list}
+
+After selecting a site, click the "![](/images/add-workspace.png){width=40px}" button to open the add workspace dialog, as shown in @fig-add-workspace-dialog.
+
+![Sa2web add workspace](/images/add-workspace-dialog.png){#fig-add-workspace-dialog}
+
+Enter the workspace name, choose a browser instance, and save.
+
+After saving, click the "![](/images/login.png){width=20px}" button to enter the login and access page for that workspace, then log in to the target site, as shown in @fig-workspace-list2.
+
+![Sa2web workspace list after adding workspace](/images/workspace-list2.png){#fig-workspace-list2}
+
+## Group Authorization
+
+Authorize the workspace to business users in a group.
+
+Go to:
+
+```text
+Group Management > Workspaces
+```
+
+This opens the workspace authorization page, as shown in @fig-workspace-group.
+
+![Sa2web workspace authorization](/images/workspace-group.png){#fig-workspace-group}
+
+If you choose **Select all workspaces** in the upper-right corner of a site, both existing and future workspaces under that site are authorized to the current group. If you only want to expose some workspaces, select them individually.
+
+When users enter the Sa2web home page, the workspaces appear, as shown in @fig-workspace-access. Expand the site and click **Access** to open the corresponding workspace.
+
+![Sa2web workspace access](/images/workspace-access.png){#fig-workspace-access}
+
+## Network Isolation
+
+When different accounts need different network environments, combine:
+
+- Cloud Browser proxy.
+- Cloud Browser isolated network.
+- Different browser instances and configurations.
+
+## Acceptance Checklist
+
+- [ ] Each workspace maps to the correct account.
+- [ ] Users only see authorized workspaces.
+- [ ] Browser and network configuration match expectations.
+- [ ] Login state can be used persistently.

@@ -1,0 +1,307 @@
+# Configure Sites and Inner Sites {#sec-sites-inner-sites-config}
+
+## Goal
+
+Understand common options on site and inner site configuration pages, and know when to enable browser emulation, proxy, time zone, WebRTC, URL encryption, watermarks, sensitive content hiding, URL blocking, page control hiding/deletion, and script configuration.
+
+This chapter is for administrators. The configuration entry is usually in the site list or inner site list: find the target site and click the configuration button.
+
+```text
+Site Management > Site List > Configuration
+Site Management > Inner Site List > Configuration
+```
+
+Site configuration and inner site configuration provide similar core capabilities. Inner site configuration is usually used for ERP, CRM, order systems, data backends, and other enterprise intranet systems. Site configuration is usually used for SaaS sites, external business sites, or web entries that need unified control.
+
+::: {.callout-note}
+This chapter covers access behavior and security policy configuration, not the basic act of adding a site. For the basic inner site flow, see Chapter 6. For permission assignment, see Chapter 7.
+:::
+
+## Configuration Object Differences
+
+The configuration objects that are easy to confuse in Sa2web fall into three main categories:
+
+| Configuration object | Entry | Scope |
+|---|---|---|
+| Browser instance configuration | Browser Management > Browser List > Configuration | Affects the kernel, brand, system, startup parameters, cache, and hardware-related behavior of a browser instance |
+| Site configuration | Site Management > Site List > Configuration | Affects access behavior when users access a SaaS or external site |
+| Inner site configuration | Site Management > Inner Site List > Configuration | Affects access behavior when users access an internal system |
+
+A simple way to understand this:
+
+- Browser instance configuration decides which browser environment runs the page.
+- Site and inner site configuration decide how access to that site is controlled.
+- Group permissions decide which users can see and use these entries.
+
+## Browser Instance Configuration
+
+Browser instance configuration mainly comes from the configuration page in the browser list. It is not for a specific URL; it applies to a specific remote browser instance.
+
+| Setting | Purpose | Recommendation |
+|---|---|---|
+| Kernel version | Selects the Chromium kernel that actually runs | Prefer the built-in, verified version |
+| Operating system | Sets the system type presented by the browser environment | Keep it consistent with the target site's risk-control strategy |
+| Brand | Chrome, Edge, Opera, Vivaldi, and other browser brands | Usually choose Chrome or the brand required by the business |
+| Brand version | Selects the corresponding brand version | Match it with the kernel version and target-site compatibility |
+| Mobile model | Emulates a mobile device | Enable only when the target site needs a mobile layout |
+| Time zone | Sets the browser environment time zone | Match the region of the business account |
+
+Advanced settings can also adjust startup parameters and Chrome runtime settings.
+
+### Startup Parameters
+
+Startup parameters are written into the set of parameters used when the browser starts. Common defaults include:
+
+| Parameter | Purpose |
+|---|---|
+| `disable-gpu` | Disables GPU, often useful as a compatibility fallback on servers |
+| `no-sandbox` | Common Chromium runtime parameter in container environments |
+| `ignore-certificate-errors` | Ignores certificate errors, suitable for testing or self-signed certificate environments |
+| `lang` | Specifies browser language, such as `en-US` |
+| `autoplay-policy` | Controls media autoplay policy |
+
+::: {.callout-warning}
+Startup parameters affect browser stability and security boundaries. Unless you clearly know that the target site or runtime environment requires it, do not casually remove default parameters or add unfamiliar ones.
+:::
+
+### Chrome Runtime Settings
+
+| Setting | Purpose |
+|---|---|
+| Temporary directory | Browser runtime temporary file location |
+| Cache directory | Browser cache file location |
+| Maximum image size | Controls the maximum size for image capture or transmission |
+| Hardware number | Hardware identifier used to distinguish browser environments; numbers only |
+| Hardware acceleration | Whether hardware acceleration is enabled |
+| Clear user data on startup | Clears browser user data each time the browser starts |
+
+If the target site strongly depends on login state or local cache, do not enable **Clear user data on startup** lightly. If you care more about one-time sessions and clean environments, you can enable it.
+
+## Basic Settings
+
+Basic settings on site and inner site configuration pages control browser presentation, security watermarks, and user-visible information during access.
+
+| Setting | Purpose | Common scenario |
+|---|---|---|
+| Enable emulator | Enables browser brand or mobile device emulation | The target site shows different pages by browser or device type |
+| Emulate browser brand | Emulates Chrome, Edge, Opera, or Vivaldi | Site compatibility or business requirements need a fixed browser brand |
+| Mobile device model | Emulates a phone model | Mobile admin portals, H5 pages, or mobile-only features |
+| Hide account name | Prevents exposing the account name in the frontend | Multi-account sharing, contractor access, customer-support assisted operations |
+| URL encryption | Avoids directly showing the real origin URL | Internal systems, supplier portals, sensitive SaaS or external sites |
+| Visible watermark | Visible watermark on the page | Visitor reminders and traceability |
+| Invisible watermark | Hidden watermark | Traceability after screenshots spread |
+| Disable copy | Restricts copying page content | Customer information, order data, contract content |
+| Disable print | Restricts printing | Prevents bulk export to paper or PDF |
+| Disable edit | Restricts editing operations | Read-only review and audit access |
+
+::: {.callout-tip}
+Enable security settings according to the minimum necessary principle. For example, if you only want to avoid exposing the real address, enable URL encryption first. If screenshot sharing is also a concern, add watermarks. If the content itself is sensitive, consider disabling copy, print, and edit.
+:::
+
+## Proxy Settings
+
+Proxy settings decide where traffic goes out when accessing the target site.
+
+After enabling a proxy, you can choose:
+
+| Proxy mode | Description |
+|---|---|
+| `direct` | Direct connection |
+| `auto_detect` | Auto-detect proxy |
+| `pac_script` | Use a PAC script |
+| `fixed_servers` | Use fixed proxy servers |
+| `system` | Use system proxy |
+
+Fixed proxy server format is usually:
+
+```text
+http://host:port
+https://host:port
+socks5://host:port
+```
+
+You can also configure:
+
+| Setting | Description |
+|---|---|
+| PAC script URL | Used in `pac_script` mode |
+| Proxy bypass list | For example `<local>,<loopback>,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8` |
+| Proxy username | Filled in when the proxy requires authentication |
+| Proxy password | Filled in when the proxy requires authentication |
+
+Inner sites usually do not need public internet proxies; they depend more on route reachability from the browser node to the intranet system. External SaaS sites may need a fixed proxy if they require a specific egress IP. Note, however, that when the running browser instance uses an isolated network, the proxy configured here does not take effect because the proxy is already specified in the isolated network.
+
+## Time Zone Settings
+
+The time zone affects the browser time environment seen by the target site and may also affect time display and default business-data ranges on some sites.
+
+Recommendations:
+
+- If no proxy is used, use the time zone where the enterprise is located.
+- If a proxy is used, use the time zone of the proxy IP region.
+
+## WebRTC Settings
+
+Site configuration includes two types of WebRTC-related options:
+
+| Setting | Purpose |
+|---|---|
+| Disable WebRTC communication on the page | Blocks the page from directly using WebRTC communication |
+| WebRTC address whitelist | Allows specific address exceptions when WebRTC is disabled |
+| Enable WebRTC | Advanced setting that controls Sa2web display or communication-related capability |
+
+If the target site does not need audio/video, real-time communication, or browser WebRTC features, disabling page WebRTC can reduce exposure of the real network environment. If the target site itself depends on WebRTC, such as video meetings, online customer service, or real-time audio/video backends, do not disable WebRTC. Instead, use the target site inside a browser instance with an isolated network.
+
+## Sensitive Content and URL Control
+
+Site and inner site configuration provide three direct control capabilities.
+
+| Configuration | Purpose | Example |
+|---|---|---|
+| Hide sensitive words | Hides sensitive text that appears on the page | Customer phone numbers, tokens, supplier names |
+| Block URL list | Blocks access to matching URLs | Export APIs, dangerous admin paths |
+| Third-party sites | Allows or associates third-party addresses that may be redirected to during access | Login pages, SSO, payment, or ticketing domains |
+
+Sensitive word hiding supports adding multiple lines, one sensitive word per line. URL blocking should start with high-risk paths such as export, download, bulk delete, and system settings.
+
+::: {.callout-warning}
+Sensitive word hiding and control hiding are page-layer controls; they do not replace backend permissions. High-risk operations should still be disabled or approval-gated in the target system itself.
+:::
+
+## Advanced Access Control
+
+Advanced configuration controls windows, downloads, paste behavior, screen transmission, and URL change events.
+
+| Setting | Default tendency | Description |
+|---|---|---|
+| New window prompt | Enabled | Prompts users when the target site opens a new window |
+| New window timeout | `20000` ms | Time to wait for new-window creation or response |
+| Maximum window count | `3` | Limits the number of simultaneously opened windows |
+| Limit downloads | Enabled | Controls file downloads from remote pages |
+| Maximum upload size | `2147483648` bytes | Controls uploaded file size |
+| Maximum pasted text length | `2097152` | Controls the size of pasted text in one operation |
+| Maximum pasted file length | `20971520` | Controls pasted file size |
+| Canvas transmission method | `richcolor` | Controls screen transmission mode |
+| Canvas interval | `0` ms | Refresh interval for non-WebRTC transmission modes |
+| Maximum Canvas width/height | Depends on transmission mode | Limits screen transmission size |
+| URL change event | Enabled | Listens for page URL changes for scripts or policies |
+
+For sensitive internal systems, first limit downloads and control the maximum number of windows, then loosen upload and paste sizes based on business needs. For graphics-heavy systems, focus on testing the Canvas transmission method and image quality.
+
+## Request and Response Headers
+
+Request header and response header configuration specifies header names that need to be read or processed by scripts.
+
+Common uses:
+
+- Identify tenants, environments, or accounts by request headers.
+- Determine interface return types by response headers.
+- Provide context to page scripts or interface scripts.
+- Debug target-site behavior behind different gateways, SSO systems, or CDNs.
+
+Only header names are filled in here, not complete request or response content.
+
+## Page Deletion and Page Hiding Controls
+
+Page control rules are divided into two types:
+
+| Type | Effect |
+|---|---|
+| Page deletion control | Removes elements from the page according to a matching URL and XPath/CSS selector |
+| Page hiding control | Hides elements according to a matching URL and XPath/CSS selector |
+
+Each rule contains:
+
+| Field | Description |
+|---|---|
+| Matching URL | `*` means all pages. See @sec-matchUrl for matching URL rules |
+| Selector | XPath/CSS selector. Multiple selectors can be added. See @sec-matchSelector for selector rules |
+
+Common uses:
+
+- Remove buttons such as **Export**, **Download**, **Delete**, and **System Settings**.
+- Hide prices, costs, and customer privacy fields.
+- Hide high-risk areas on specific URL pages.
+- Provide simplified interfaces for contractors, temporary employees, and collaboration users.
+
+Selectors may become invalid after the target site changes. Re-test these rules after every target-system upgrade.
+
+## Script Configuration
+
+Script configuration is suitable for handling page behavior, complex login, interface responses, and page enhancements.
+
+Each script contains:
+
+| Field | Description |
+|---|---|
+| Script name | Helps administrators identify the script |
+| Matching URL | URL range where the script takes effect. See @sec-matchUrl |
+| Page script | Runs in the page environment; suitable for DOM operations, button handling, form assistance, and page enhancements |
+| SSE script | Handles server-sent event streams |
+| Selector | Page scripts can combine selectors to locate elements precisely. See @sec-matchSelector |
+| JavaScript code | The script content to execute. See @sec-site-customization for script writing |
+
+Test scripts on a test site or test account before authorizing them for production groups. Script errors may make the page unusable, so each script should have a clear name and the narrowest practical matching scope.
+
+## Recommended Configuration Combinations
+
+Start with these combinations for different scenarios:
+
+| Scenario | Recommended configuration |
+|---|---|
+| Read-only access to internal ERP/CRM | URL encryption, visible watermark, limit downloads, disable copy, hide sensitive words |
+| Contractor access to customer backend | Hide account name, URL encryption, visible watermark, invisible watermark, page deletion controls, recording and replay |
+| SaaS multi-account usage | Fixed proxy, time zone, browser brand, mobile device model, hide account name |
+| High-risk admin backend | Block URL list, page deletion controls, limit downloads, script audit |
+| AI / MCP access | URL encryption, hide sensitive words, block high-risk URLs, page hiding controls, minimum group authorization |
+
+## Matching URL Rules {#sec-matchUrl}
+
+When the value is `*`, all URLs are matched. Other rules are:
+
+1. If it starts with `regex:`, the following content is used as a regular expression to match the URL, for example `regex:https\:\/\/www.sa2web.com\/.+`.
+2. If it starts with `extract:`, the URL is matched by exact equality, for example `extract:https://www.sa2web.com`.
+3. If it starts with `script:`, a JavaScript expression is used to match the URL. The script has a variable named `url`; when the script result is `true`, it matches. For example: `script:url.endsWith('pricing')`.
+4. If none of the above conditions apply, the URL is matched by prefix, for example `https://www.sa2web.com/my`.
+
+## XPath/CSS Selector {#sec-matchSelector}
+
+The XPath/CSS selector mentioned in this tutorial is a unified selector format designed to reduce passed parameters. It extends normal selectors with the following rules:
+
+Format:
+
+```text
+(xpath:)?<xpath/css selector><:p<number>>?
+```
+
+If it starts with `xpath:`, it is an XPath rule. Otherwise it is a CSS selector. The optional `:p<number>` part means searching upward from the target element by that number of ancestor levels.
+
+Examples:
+
+```text
+// xpath selector
+xpath://body[contains(text(),sa2web)]:p1
+// css selector
+.article
+.article:p1
+```
+
+## Configuration Flow Recommendation
+
+1. Confirm that the target site opens normally.
+2. Configure access environment settings such as proxy, time zone, and browser emulation.
+3. Enable display policies such as URL encryption, watermarks, and account-name hiding.
+4. Add sensitive words, URL blocking, page controls, and scripts.
+5. Verify through the frontend with a test user or test Agent.
+6. After confirmation, authorize the production groups.
+
+## Acceptance Checklist
+
+- [ ] The target site or inner site opens normally.
+- [ ] Proxy, time zone, and browser emulation match business account requirements.
+- [ ] URL encryption, watermarks, and account-name hiding work as expected.
+- [ ] Restrictions such as disabling copy, print, and edit do not block required business flows.
+- [ ] Sensitive words and URL blocking match high-risk content.
+- [ ] Page hiding/deletion controls work on target pages.
+- [ ] Scripts only take effect on expected URLs.
+- [ ] Group authorization is limited to users or Agents who need it.

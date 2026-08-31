@@ -1,0 +1,62 @@
+# Enable Recording and Replay Audit
+
+## Goal
+
+Put remote browsing access for specified groups into recording mode and replay historical operations in the backend.
+
+## Prerequisites
+
+- The deployed version supports the full feature set, and the installation package must be the Enterprise Edition.
+- The administrator has the **View Recording and Replay** permission.
+- Access records have already been generated.
+
+## Enable Recording
+
+Go to:
+
+```text
+Group Management > Group List
+```
+
+Click **Privileges** to open the group privilege settings page, as shown in @fig-group-privileges-replay. Select **Recording and Replay**, then save.
+
+![Sa2web group recording and replay](/images/group-privileges-replay.png){#fig-group-privileges-replay}
+
+After that, users in the group enter recording mode while browsing, as shown in @fig-replay-record.
+
+![Sa2web frontend recording page](/images/replay-record.png){#fig-replay-record}
+
+During recording, a red line appears at the top of the page to remind the user that the current access is being recorded.
+
+## View Replay
+
+Go to:
+
+```text
+User Management > User List
+User Management > Admin List
+```
+
+Find the target user and click the "![](/images/replay.png){width=30px}" button to enter the replay page, as shown in @fig-replay-page.
+
+![Sa2web replay page](/images/replay-page.png){#fig-replay-page}
+
+1. Select an access record.
+2. Use play, pause, and progress controls to review it.
+3. If you need to copy content from the replay page, click the "![](/images/unlock-record-copy.png){width=30px}" button. You can then copy content from the replay page.
+
+## Suitable Scenarios
+
+- Employee operation audit.
+- Training review.
+- Troubleshooting.
+- Business handover.
+- Review of high-risk backends.
+
+## Acceptance Checklist
+
+- [ ] Recording is enabled for the target group.
+- [ ] New access creates records.
+- [ ] The replay page opens.
+- [ ] Playback and progress controls work normally.
+- [ ] Unauthorized administrators cannot view recordings.

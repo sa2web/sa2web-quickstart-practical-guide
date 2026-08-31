@@ -1,0 +1,729 @@
+# 使用脚本 API {#sec-script-api}
+
+## 目标
+
+Sa2web 页面脚本和普通接口拦截脚本可使用的 `window.api` 能力，便于在站点配置、内部站点配置、账号配置和插件脚本中编写更稳定的脚本。
+
+Script API分为五类：
+
+| API | 用途 |
+|---|---|
+| `api.config` | 读取自定义配置，目前只针对协作链接下有效 |
+| `api.http` | 发起 HTTP 请求，且绕过页面 CORS 限制 |
+| `api.user` | 读写用户、站点、账号或设备维度的数据 |
+| `api.dom` | 查询 DOM、判断可见性、监听元素变化、创建覆盖层 |
+| `api.utils` | 等待条件、在页面中执行 JavaScript |
+| `api.header()` | 读取已记录的请求头或响应头 |
+
+页面脚本和普通接口拦截脚本可以使用 `window.api`。SSE 脚本只保证传入 `data`，通常不依赖 `window.api`。
+
+## 总体结构
+
+在脚本中可以直接使用 `api`，也可以通过 `window.api` 访问：
+
+```ts
+interface Window {
+  api: {
+    user: UserApi;
+    config: Record<string, unknown>;
+    http: HttpApi;
+    dom: DomApi;
+    utils: UtilsApi;
+    header(headerName: string, isRequestHeader: boolean): Promise<string | string[] | undefined>;
+  };
+}
+```
+
+示例：
+
+```js
+const apiBase = api.config.apiBase;
+const userToken = await api.user.get('token');
+const submit = api.dom.querySelector(document, 'button[type="submit"]');
+const profile = await api.http.ajax({ url: `http://192.168.1.111:8080/profile` });
+```
+
+::: {.callout-tip}
+脚本应优先使用 Sa2web 提供的 `api.dom` 查询工具。它同时支持 CSS selector 和 XPath selector，比只使用 `document.querySelector()` 更适合处理复杂业务页面。
+:::
+
+## `api.config`
+
+`api.config` 用于读取站点脚本环境中的自定义配置。
+
+```ts
+config: Record<string, unknown>
+```
+
+示例：
+
+```js
+const apiBase = api.config.apiBase;
+const featureEnabled = api.config.featureEnabled === true;
+```
+
+## `api.http`
+
+`api.http` 为用户脚本提供 HTTP 请求工具。`api.http.ajax` 会在 浏览器主进程中执行实际请求，因此不受页面 CORS 策略限制。
+
+### `api.http.ajax(options)`
+
+发送 HTTP 请求。
+
+```ts
+ajax(options: {
+  url: string;
+  method?: string;
+  data?: any;
+  headers?: Record<string, string>;
+  timeout?: number;
+  dataType?: 'json' | 'text' | 'html' | 'arrayBuffer';
+  contentType?: string;
+  processData?: boolean;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data?: any;
+  error?: string;
+  timeout?: boolean;
+}>
+```
+
+参数说明：
+
+| 选项 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `url` | `string` | - | 请求 URL。 |
+| `method` | `string` | `GET` | HTTP 方法。 |
+| `data` | `any` | - | 请求数据。`GET` 和 `HEAD` 请求会序列化到查询字符串；其他方法会写入请求体。 |
+| `headers` | `Record<string, string>` | `{}` | 请求头。 |
+| `timeout` | `number` | - | 超时时间，单位为毫秒。仅大于 `0` 时生效。 |
+| `dataType` | `'json' \| 'text' \| 'html' \| 'arrayBuffer'` | `json` | 响应解析方式。 |
+| `contentType` | `string` | `application/x-www-form-urlencoded; charset=UTF-8` | 请求体的 Content-Type。 |
+| `processData` | `boolean` | `true` | 是否自动序列化 `data`。设为 `false` 时，`data` 会直接作为请求体传入。 |
+
+返回值：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `ok` | `boolean` | HTTP 2xx 响应为 `true`；解析错误、HTTP 错误、超时、中止或网络错误为 `false`。 |
+| `status` | `number` | HTTP 状态码。`0` 表示超时、中止或网络层失败。 |
+| `statusText` | `string` | HTTP 状态文本；非 HTTP 失败时为 `timeout`、`abort` 或 `error`。 |
+| `data` | `any` | 解析成功后的响应数据。 |
+| `error` | `string` | 解析失败或非 HTTP 失败时的错误消息。 |
+| `timeout` | `boolean` | 请求因配置的超时时间被中止时为 `true`。 |
+
+GET 请求示例：
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/profile',
+  method: 'GET',
+  dataType: 'json',
+  timeout: 10000
+});
+
+if (ret.ok) {
+  console.log(ret.data);
+}
+```
+
+POST 请求示例：
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/items',
+  method: 'POST',
+  contentType: 'application/json',
+  data: { name: 'demo' }
+});
+
+if (!ret.ok) {
+  console.warn(ret.status, ret.error || ret.statusText);
+}
+```
+
+## `api.user`
+
+`api.user` 用于读写脚本运行过程中的用户关联数据。它可以按不同维度隔离存储范围。
+
+通用参数：
+
+| 参数 | 类型 | 默认值 | 说明 |
+|---|---|---|---|
+| `site` | `boolean` | `false` | 是否按站点隔离 |
+| `account` | `boolean` | `false` | 是否按站点账号或者工作空间名称隔离 |
+| `did` | `boolean` | `false` | 是否按设备隔离 |
+
+维度选择建议：
+
+| 场景 | 建议 |
+|---|---|
+| 同一用户跨站点共享 | `site=false` |
+| 每个站点独立保存 | `site=true` |
+| 同一站点的不同账号隔离 | `account=true` |
+| 同一用户在不同设备上隔离 | `did=true` |
+
+### `api.user.put()`
+
+保存指定键值。
+
+```ts
+put(
+  name: string,
+  value: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+示例：
+
+```js
+await api.user.put('token', 'abc123');
+await api.user.put('draft:lastOrderId', 'A-1001', true, true);
+```
+
+### `api.user.get()`
+
+读取指定键值。
+
+```ts
+get(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ value: string | null, status: boolean }>
+```
+
+示例：
+
+```js
+const ret = await api.user.get('token');
+if (ret.status && ret.value) {
+  console.log(ret.value);
+}
+```
+
+### `api.user.remove()`
+
+删除指定键值。
+
+```ts
+remove(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+示例：
+
+```js
+await api.user.remove('token');
+await api.user.remove('draft:lastOrderId', true, true);
+```
+
+### `api.user.incr()`
+
+按步长增加指定键的数值。键不存在时会创建该键。
+
+```ts
+incr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+示例：
+
+```js
+const ret = await api.user.incr('submitCount', 1, true);
+console.log(ret.value);
+```
+
+### `api.user.decr()`
+
+按步长减少指定键的数值。键不存在时会按负数初始值创建。
+
+```ts
+decr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+示例：
+
+```js
+const ret = await api.user.decr('remainingQuota', 1, true, true);
+console.log(ret.value);
+```
+
+### `api.user.startsWith()`
+
+按键名前缀查找数据。
+
+```ts
+startsWith(
+  prefix: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<Array<{ name: string, value: string }>>
+```
+
+示例：
+
+```js
+const items = await api.user.startsWith('cache:', true);
+for (const item of items) {
+  console.log(item.name, item.value);
+}
+```
+
+### `api.user.countAll()`
+
+统计指定键名的记录数量。
+
+```ts
+countAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+示例：
+
+```js
+const ret = await api.user.countAll('token', true);
+console.log(ret.value);
+```
+
+### `api.user.sumAll()`
+
+统计指定键名对应值的数值总和。
+
+```ts
+sumAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+示例：
+
+```js
+const ret = await api.user.sumAll('score', true);
+console.log(ret.value);
+```
+
+## `api.dom`
+
+`api.dom` 提供 DOM 查询、可见性判断、连接监听、尺寸监听和覆盖层创建能力。
+
+选择器支持：
+
+| 写法 | 说明 |
+|---|---|
+| `.button.primary` | CSS selector |
+| `xpath://div[@id="app"]` | XPath selector |
+| `.dialog:p` | 返回匹配元素的父元素 |
+| `.dialog:p2` | 返回匹配元素向上两级的父元素 |
+| `.header:bottom` | 在覆盖层边界方法中使用元素下边界 |
+| `.sidebar:right` | 在覆盖层边界方法中使用元素右边界 |
+
+具体也可见 @sec-matchSelector
+
+### `api.dom.createMutationObserver()`
+
+创建并缓存 `MutationObserver`。如果目标元素上已经绑定同名 observer，会直接返回已有 observer。
+
+```ts
+createMutationObserver(
+  ele: Element,
+  bindStr: string,
+  childList: boolean,
+  subtree: boolean,
+  attributes: boolean,
+  characterData: boolean,
+  fn: (mutations: MutationRecord[]) => void
+): MutationObserver
+```
+
+示例：
+
+```js
+api.dom.createMutationObserver(
+  document.body,
+  '__bodyObserver__',
+  true,
+  true,
+  false,
+  false,
+  (mutations) => console.log(mutations)
+);
+```
+
+### `api.dom.querySelector()`
+
+查询第一个匹配元素。
+
+```ts
+querySelector(doc: Document, cssOrXPathSelector: string): HTMLElement | null
+```
+
+示例：
+
+```js
+const el = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"提交")]'
+);
+```
+
+### `api.dom.querySelectorAll()`
+
+查询所有匹配元素。
+
+```ts
+querySelectorAll(doc: Document, cssOrXPathSelector: string): HTMLElement[]
+```
+
+示例：
+
+```js
+const buttons = api.dom.querySelectorAll(document, 'button.primary');
+buttons.forEach((button) => console.log(button.textContent));
+```
+
+### `api.dom.isVisible()`
+
+判断元素是否处于可见交叉区域。
+
+```ts
+isVisible(ele: HTMLElement): Promise<boolean>
+```
+
+示例：
+
+```js
+const el = api.dom.querySelector(document, '.submit');
+if (el && await api.dom.isVisible(el)) {
+  console.log('visible');
+}
+```
+
+### `api.dom.getVisibleRect()`
+
+获取元素当前可见区域矩形。
+
+```ts
+getVisibleRect(ele: HTMLElement): Promise<DOMRectReadOnly>
+```
+
+示例：
+
+```js
+const el = api.dom.querySelector(document, '.panel');
+if (el) {
+  const rect = await api.dom.getVisibleRect(el);
+  console.log(rect.left, rect.top, rect.width, rect.height);
+}
+```
+
+### `api.dom.getConnectListeners()`
+
+获取当前连接监听器列表。
+
+```ts
+getConnectListeners(): Array<{
+  querySelector: string;
+  callback: (isConnected: boolean) => void;
+  isConnected?: boolean;
+}>
+```
+
+示例：
+
+```js
+api.dom.addConnectListener('.modal', () => {});
+console.log(api.dom.getConnectListeners());
+```
+
+### `api.dom.addConnectListener()`
+
+监听元素在文档中的出现和消失。
+
+```ts
+addConnectListener(
+  cssOrXPathSelector: string,
+  callback: (isConnected: boolean) => void
+): void
+```
+
+示例：
+
+```js
+api.dom.addConnectListener('.dialog', (isConnected) => {
+  console.log('dialog:', isConnected);
+});
+```
+
+### `api.dom.removeConnectListener()`
+
+移除指定选择器对应的连接监听器。
+
+```ts
+removeConnectListener(cssOrXPathSelectors: string[]): void
+```
+
+示例：
+
+```js
+api.dom.removeConnectListener(['.dialog', '.toast']);
+```
+
+### `api.dom.addResizeListener()`
+
+监听目标元素尺寸和位置变化。元素不存在时，回调会收到空矩形。
+
+```ts
+addResizeListener(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  callback: (rect: DOMRect) => void,
+  createObserver?: boolean,
+  delayTime?: number
+): ResizeObserver | (() => void)
+```
+
+示例：
+
+```js
+api.dom.addResizeListener('.target', '__targetResize__', (rect) => {
+  console.log(rect.width, rect.height);
+});
+```
+
+### `api.dom.createOverlayBy()`
+
+创建一个跟随目标元素可见区域的固定定位覆盖层。
+
+```ts
+createOverlayBy(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  createObserver?: boolean,
+  delayTime?: number,
+  fn?: (rect: DOMRectReadOnly) => void
+): HTMLElement
+```
+
+示例：
+
+```js
+const overlay = api.dom.createOverlayBy('.target', '__overlay__');
+overlay.style.border = '2px solid #f00';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+### `api.dom.createOverlayByBorder()`
+
+通过上、右、下、左四条边创建固定定位覆盖层。边界值可以是像素数字，也可以是选择器。
+
+```ts
+createOverlayByBorder(
+  bindWindowStr: string,
+  top: string | number,
+  right: string | number,
+  bottom: string | number,
+  left: string | number,
+  createObserver?: boolean,
+  delayTime?: number
+): HTMLElement
+```
+
+示例：
+
+```js
+const panel = api.dom.createOverlayByBorder(
+  '__centerPanel__',
+  'header:bottom',
+  20,
+  'footer:top',
+  '.sidebar:right'
+);
+panel.style.background = 'rgba(0,0,0,.08)';
+```
+
+## `api.utils`
+
+`api.utils` 提供常用辅助能力，适合处理页面等待和页面上下文执行。
+
+### `api.utils.wait()`
+
+轮询等待条件函数返回真值。超时会抛出错误。
+
+```ts
+wait(
+  fn: () => boolean,
+  timeoutMs: number,
+  intervalMs?: number
+): Promise<void>
+```
+
+示例：
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.ready'),
+  10000,
+  200
+);
+```
+
+### `api.utils.runScript()`
+
+在当前页面执行 JavaScript 代码，并返回执行结果。
+
+```ts
+runScript(
+  code: string,
+  callback?: (result: any, error: Error) => void
+): Promise<any>
+```
+
+示例：
+
+```js
+const title = await api.utils.runScript('document.title');
+console.log(title);
+```
+
+带回调的写法：
+
+```js
+await api.utils.runScript('document.body.innerText.slice(0, 100)', (result, error) => {
+  if (error) {
+    console.error(error);
+    return;
+  }
+  console.log(result);
+});
+```
+
+## `api.header()`
+
+`api.header(headerName, isRequestHeader)` 用于读取远程浏览器记录的请求头或响应头。
+
+```ts
+header(
+  headerName: string,
+  isRequestHeader: boolean
+): Promise<string | string[] | undefined>
+```
+
+参数：
+
+| 参数 | 类型 | 说明 |
+|---|---|---|
+| `headerName` | `string` | 请求头或响应头名称，读取时会转成小写 |
+| `isRequestHeader` | `boolean` | `true` 读取请求头，`false` 读取响应头 |
+
+示例：
+
+```js
+const cookie = await api.header('cookie', true);
+const setCookie = await api.header('set-cookie', false);
+```
+
+注意事项：
+
+- 只有在站点配置中添加过的请求头或响应头才会被记录；
+- 请求头来自远程浏览器发送请求时的 Header；
+- 响应头来自远程浏览器收到响应时的 Header；
+- 响应头可能返回字符串数组。
+
+## 常见脚本组合
+
+### 等待元素出现后点击
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.login-button'),
+  10000,
+  200
+);
+
+const button = api.dom.querySelector(document, '.login-button');
+button?.click();
+```
+
+### 用 XPath 查找中文按钮
+
+```js
+const submit = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"提交")]'
+);
+
+if (submit && await api.dom.isVisible(submit)) {
+  submit.click();
+}
+```
+
+### 保存页面状态
+
+```js
+const count = await api.user.incr('visitCount', 1, true, true);
+await api.user.put('lastTitle', document.title, true, true);
+
+console.log(count.value);
+```
+
+### 给有兴趣区域加覆盖层
+
+```js
+const overlay = api.dom.createOverlayBy('.customer-phone', '__phoneMask__');
+overlay.style.background = '#fff';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+## 使用原则
+
+脚本应像业务代码一样管理：
+
+- 限制匹配 URL，避免脚本在不相关页面执行；
+- 给脚本设置清晰名称，方便回滚和排查；
+- 先在测试站点或测试账号验证；
+- 对依赖 DOM selector 的脚本做回归测试；
+- 对存储数据设置明确前缀，例如 `cache:`、`draft:`、`state:`；
+- 不把密钥、长期 Token 或账号密码硬编码进脚本；
+- 记录脚本修改原因，必要时做 Code Review。
+
+## 排错清单
+
+| 问题 | 检查方向 |
+|---|---|
+| `api` 不存在 | 确认脚本类型是否支持 `window.api`，SSE 脚本不要依赖它 |
+| 元素找不到 | 检查 URL 是否匹配、页面是否加载完成、selector 是否变化 |
+| XPath 不生效 | 确认前缀使用 `xpath://` |
+| Header 读不到 | 先在站点配置中加入对应请求头或响应头名称 |
+| 用户数据串号 | 检查 `site`、`account`、`did` 维度参数 |
+| 覆盖层位置异常 | 检查目标元素是否可见，以及边界 selector 是否正确 |
+| 脚本影响其它页面 | 缩小匹配 URL，或在脚本开头增加页面条件判断 |

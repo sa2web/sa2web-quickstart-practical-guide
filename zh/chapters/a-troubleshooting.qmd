@@ -1,0 +1,35 @@
+# 常见问题与排错
+
+## 管理后台打不开
+
+```bash
+docker compose ps
+docker compose logs --tail 200
+```
+
+检查域名、80/443、证书和应用日志。
+
+## 用户看不到 SaaS 站点
+
+依次检查：站点状态 → 用户分组 → SaaS 站点授权 → 账号类型。
+
+## 用户看不到 工作空间
+
+检查分组中的工作空间授权。
+
+## 内部站点打不开
+
+1、先从 Sa2web Browser 节点所在网络确认目标 URL 可达，再检查 DNS、路由、防火墙和 ACL。
+2、检查分组中的内部站点授权。
+
+## MCP 无法连接
+
+检查：Node.js、`@sa2web/mcp`、Playwright、`SA2_LOGIN_URL`、clientId/clientSecret、Agent 权限和 HTTPS。
+
+## Passkey 失败
+
+优先检查：目标域名、HTTPS 信任、浏览器 origin、Passkey 绑定状态以及目标站点兼容性。
+
+官方文档：
+
+- https://www.sa2web.com/docs/zh/operations/troubleshooting

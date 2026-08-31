@@ -1,0 +1,364 @@
+# 安装与部署
+
+## 目标
+
+在 Linux x86_64 服务器准备 Docker / Docker Compose，下载 Sa2web 安装包，完成首次安装，并做完最小可用配置：注册许可证、添加机器、添加浏览器、授权分组，最后用普通用户前端打开云浏览器。
+
+Sa2web 官方基础要求：CPU 1 核及以上、内存建议 4 GB 及以上（最低 2 GB）、Linux x86_64，并能执行 Docker 命令。
+
+本文使用 **Ubuntu 24.04 LTS x86_64** 作为示例。
+
+## 准备 Ubuntu 服务器
+
+建议至少准备：
+
+| 项目 | 建议 |
+|---|---|
+| 操作系统 | Ubuntu 24.04 LTS x86_64 |
+| CPU | 2 核以上更适合测试和实际使用 |
+| 内存 | 4 GB 或以上 |
+| 权限 | root 或 sudo |
+| 网络 | 服务器能访问 Docker 镜像源，客户端能访问服务器 |
+| 域名 | 公网部署建议准备已解析到服务器公网 IP 的域名 |
+
+安装前先确认服务器地址：
+
+| 地址 | 用途 | 示例 |
+|---|---|---|
+| 内网 IP | Sa2web 服务和 keeper / browser 之间通信 | `192.168.1.111` |
+| 公网 IP | 外部用户访问入口 | `203.0.113.10` |
+| 域名 | 生产环境 HTTPS 证书和访问地址 | `browser.example.com` |
+
+::: {.callout-warning}
+Sa2web 官方当前服务器部署要求为 Linux x86_64。Windows、macOS、ARM64 不属于当前正式部署环境。
+:::
+
+::: {.callout-tip}
+如果只在局域网测试，公网 IP 和域名都可以暂时填写内网 IP。此时访问地址类似 `https://192.168.1.105/`，浏览器地址栏会提示证书不安全，可以参考 @sec-safe-cert 来解决这个问题。
+:::
+
+## 安装 Docker 与 Docker Compose
+
+Docker 官方当前推荐通过 apt repository 安装 Docker Engine。
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+添加仓库：
+
+```bash
+sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<EOF2
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF2
+
+sudo apt update
+```
+
+安装：
+
+```bash
+sudo apt install -y \
+  docker-ce docker-ce-cli containerd.io \
+  docker-buildx-plugin docker-compose-plugin
+```
+
+验证：
+
+```bash
+docker --version
+docker compose version
+sudo docker ps
+```
+
+非 root 用户可使用以下命令添加当前用户到 `docker` 组：
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+执行后重新登录终端，再运行：
+
+```bash
+docker ps
+```
+
+如果你的部署环境在中国境内，可以使用中国地区的镜像源加速 Docker 镜像下载和安装。
+
+```bash
+# 1. 更新系统并安装依赖
+sudo apt update
+sudo apt install -y ca-certificates curl gnupg
+
+# 2. 创建 keyrings 目录
+sudo install -m 0755 -d /etc/apt/keyrings
+
+# 3. 下载 Docker GPG 公钥（使用阿里云镜像）
+curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+sudo chmod a+r /etc/apt/keyrings/docker.gpg
+
+# 4. 添加 Docker CE 国内软件源
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://mirrors.aliyun.com/docker-ce/linux/ubuntu \
+$(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+  | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# 5. 更新软件源
+sudo apt update
+
+# 6. 安装 Docker 和 Docker Compose
+sudo apt install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin
+
+sudo usermod -aG docker $USER
+
+# 7. 验证安装
+docker --version
+docker compose version
+```
+
+## 下载 Sa2web 安装包
+
+打开 Sa2web 官网：
+
+```text
+https://www.sa2web.com
+```
+
+点击顶部 **Download** 菜单进入下载页，选择需要的版本，例如 团队版 或 企业版。
+
+如果当前没有登录，下载前会进入账号创建或登录流程。如果还没有账号，则可以注册新账号：
+
+1. 输入邮箱；
+2. 输入要使用的密码；
+3. 再次输入确认密码；
+4. 点击获取验证码；
+5. 到邮箱查看验证码并填入；
+6. 勾选同意协议；
+7. 点击创建账户。
+
+账号创建完成后，回到下载页再次点击对应版本，浏览器会下载安装包。
+
+::: {.callout-note}
+安装包名称会随版本变化。后文使用 `browser_team_x.y.z.tar.gz` 或 `browser_full_x.y.z.tar.gz` 表示实际下载到的文件名。
+:::
+
+## 上传并解压安装包
+
+把下载到本地电脑的安装包上传到服务器。可以用 `scp`，也可以使用服务器面板、堡垒机、SFTP 工具或云厂商控制台。
+
+示例：
+
+```bash
+scp browser_team_x.y.z.tar.gz root@192.168.1.105:/opt/
+```
+
+登录服务器后进入上传目录并解压：
+
+```bash
+ssh root@192.168.1.105
+
+cd /opt
+tar -xzf browser_team_x.y.z.tar.gz
+cd browser_team_x.y.z
+```
+
+如果下载的是 Full 版本，把文件名和目录名替换为实际名称即可：
+
+```bash
+tar -xzf browser_full_x.y.z.tar.gz
+cd browser_full_x.y.z
+```
+
+## 运行安装脚本
+
+进入解压目录后运行安装文件：
+
+```bash
+# 创建程序要安装的位置
+mkdir -p /opt/sa
+sudo chown -R $USER:$USER /opt/sa
+
+# 运行安装脚本
+chmod +x install.sh
+sh install.sh
+```
+
+安装脚本会逐项询问部署参数，见图1。建议提前把下面这张表填好，安装时照着输入。
+
+| 提示项 | 填写建议 |
+|---|---|
+| 安装目录 | 建议使用默认值；如需自定义，填写一个专门目录，注：当前用户在安装目录需要有足够权限。 |
+| 服务器内网 IP | 填写服务器内网地址，例如 `192.168.1.105` |
+| 服务器公网 IP | 公网部署填写公网 IP；局域网部署填写同一个内网 IP |
+| 域名 | 有域名填域名；没有域名可填公网 IP 或内网 IP |
+| 系统名称 | 浏览器页面显示的系统名称，例如 `Sa2web Demo` |
+| `system` 用户密码 | 建议设置强密码；直接按 Enter 会使用默认密码 `abc123456` |
+| 证书生成选项 | 公网域名自动申请证书选 `1`；自签名证书选 `2`；使用自有证书选 `3` |
+
+
+证书选项可以按实际场景选择：
+
+| 选项 | 适用场景 |
+|---|---|
+| `1` | 服务器部署在公网，并且域名已经解析到当前服务器，需要自动获取免费 HTTPS 证书 |
+| `2` | 局域网测试、没有域名，或暂时使用 IP 地址访问 |
+| `3` | 企业已有证书，需要使用自己的证书文件 |
+
+::: {.callout-note}
+当选择`2` 局域网部署时，如果不想浏览器地址栏提示不安全，请参考 @sec-free-cert 和 @sec-safe-cert 。
+:::
+
+后续如果脚本继续提示不确定的高级项，首次测试可以直接按 Enter 使用默认值。脚本会加载离线镜像、生成 `docker-compose.yml`、写入配置并启动容器。
+
+::: {.callout-warning}
+不要在生产环境长期使用默认密码 `abc123456`。即使安装时为了快速验证按了 Enter，首次登录后也应立即修改 `system` 密码，并创建备用管理员。
+:::
+
+
+
+如果是公网部署时，还应该在网络设置里开放以下端口号:
+
+| 端口 | 使用场景 |
+|---|---|
+|443(tcp),80(tcp)|http(s)访问默认端口|
+|3478(tcp,udp)|webrtc通信需要用的端口,根据需要，还可以开通其它UDP端口49160-49200|
+
+## 第一次访问 Sa2web
+
+安装完成后，用浏览器打开部署地址：
+
+```text
+https://<APP_DOMAIN>/
+```
+
+示例：
+
+```text
+https://192.168.1.105/
+https://browser.example.com/
+```
+
+管理平台登录地址通常为：
+
+```text
+https://<APP_DOMAIN>/admin/login
+```
+
+使用安装时配置的 `system` 用户和密码登录。验证码按页面提示输入, 如 @fig-admin-login 所示。
+
+![Sa2web 管理平台登录](/images/admin-login.png){#fig-admin-login}
+
+## 注册许可证
+
+登录管理平台后，先打开注册许可证对话框，如 @fig-register-license 所示。
+
+![Sa2web 注册许可证](/images/register-license.png){#fig-register-license}
+
+然后回到 Sa2web 官网：
+
+```text
+https://www.sa2web.com
+```
+
+点击 **My** 页面，在账号中心获取免费许可证。复制页面中的 `license` 和 `key`，填入管理平台的注册许可证对话框并保存,如 @fig-get-license 所示。
+
+![Sa2web 官网获取许可证](/images/get-license.png){#fig-get-license}
+
+::: {.callout-note}
+免费许可证通常适合学习、验证和小规模试用。部分高级能力即使在界面中可以勾选，也可能因为许可证类型不同而不生效。
+:::
+
+
+## 服务状态与日志
+
+查看容器状态：
+
+```bash
+docker compose -f <安装目录>/docker-compose.yml ps
+```
+
+查看应用日志：
+
+```bash
+tail -n 200 <安装目录>/logs/app/app.log
+```
+
+或查看 Docker Compose 日志：
+
+```bash
+docker compose -f <安装目录>/docker-compose.yml logs --tail 200 --follow
+```
+
+## 用户端本地浏览器与SSL证书
+
+
+
+### Sa2web部署在公网，且有自己的域名  {#sec-free-cert}
+
+1、在域名服务商那里（如cloudflare）将域名dns记录指向部署Sa2web服务的IP地址;
+
+2、Sa2web所在服务器网络设置开放80和443端口;
+
+3、用户第一次访问`https://<域名>/`，Sa2web的caddy服务会自动向	Let's Encrypt 申请可信证书。用户端浏览器此时将不再提示证书不安全。
+
+### Sa2web部署在局域网，使用Caddy自签名证书 {#sec-safe-cert}
+
+1、首先获取证书，可以从`$INSTALL_PATH/data/caddy/pki/authorities/local/root.crt`，获取root.crt发送给用户安装证书，或者也可以让用户点击左下角弹出菜单，点击`我的设备`,然后点击`下载证书`，如  @fig-down-cert 所示。
+
+![Sa2web 下载根证书](/images/down-cert.png){#fig-down-cert}
+
+2、下载之后将证书安装在可信根证书里，如 @fig-install-root-cert 所示。
+
+![Sa2web 下载根证书](/images/install-root-cert.png){#fig-install-root-cert}
+
+3、安装证书之后，退出浏览器，然后重新打开浏览器访问，浏览器此时将不再提示证书不安全，如 @fig-safe-cert 所示。
+
+![Sa2web 安全证书](/images/safe-cert.png){#fig-safe-cert}
+
+
+
+常见检查点：
+
+| 问题 | 检查方向 |
+|---|---|
+| 页面打不开 | 确认服务器安全组、防火墙、域名解析、证书方式 |
+| 登录失败 | 确认 `system` 密码和验证码 |
+| 机器不在线 | 确认机器 IP、`7000` 端口和容器状态 |
+| 浏览器无法启动 | 查看 Docker Compose 日志和机器状态 |
+| 隔离网络不可用 | 确认浏览器代理配置，以及分组是否授权该隔离网络 |
+
+## 验收
+
+- [ ] Docker 正常；
+- [ ] `docker compose` 正常；
+- [ ] Sa2web 安装脚本执行完成；
+- [ ] 部署地址 `https://<APP_DOMAIN>/` 可访问；
+- [ ] `/admin/login` 可访问；
+- [ ] `system` 可登录管理平台；
+- [ ] 许可证已注册；
+- [ ] 默认密码已修改。
+
+参考文档：
+
+- https://www.sa2web.com/docs/zh/install/prerequisites
+- https://www.sa2web.com/docs/zh/install/deploy
+- https://docs.docker.com/engine/install/ubuntu/

@@ -1,0 +1,77 @@
+# 开启多工作空间浏览
+
+## 目标
+
+使用工作空间管理固定业务账号、固定浏览器环境和多人协同访问。
+
+当同一个站点需要使用多个账号或多个身份访问时，可以为该站点创建多个工作空间。前端用户进入不同工作空间，就相当于使用不同的远程浏览器环境和账号。
+
+## 规划工作空间
+
+可以按地区、业务线、店铺或客户划分工作空间，例如：
+
+```text
+E-Commerce US A
+E-Commerce US B
+E-Commerce EU C
+```
+
+这样可以在不同工作空间中使用不同账号登录同一站点，避免账号冲突。
+
+## 创建工作空间
+
+前置条件：已创建站点，并拥有“工作空间管理”权限。
+
+进入：
+
+```text
+工作空间管理 > 工作空间列表
+```
+将展示工作空间列表，如 @fig-workspace-list 所示。
+
+![Sa2web 工作空间列表](/images/workspace-list.png){#fig-workspace-list}
+
+选择站点后，点击“![](/images/add-workspace.png){width=40px}”按钮，打开添加工作空间对话框，如 @fig-add-workspace-dialog 所示。
+
+![Sa2web 添加工作空间](/images/add-workspace-dialog.png){#fig-add-workspace-dialog}
+
+填写工作空间名称，选择浏览器实例，然后保存。
+
+保存后点击“![](/images/login.png){width=20px}”按钮，进入该工作空间的登录和访问页面，并完成目标站点登录, 如 @fig-workspace-list2 所示。
+
+![Sa2web 工作空间列表](/images/workspace-list2.png){#fig-workspace-list2}
+
+## 分组授权
+
+在分组中把工作空间授权给业务用户。
+
+进入：
+
+```text
+分组管理 > 工作空间
+```
+
+这会进入工作空间授权页面，如 @fig-workspace-group 所示。
+
+![Sa2web 工作空间授权](/images/workspace-group.png){#fig-workspace-group}
+
+如果选择站点右上角的“全选所有空间”，该站点下已有工作空间和未来新增工作空间都会授权给当前分组。如果只想开放部分工作空间，则单独勾选需要的工作空间。
+
+用户进入Sa2web首页，就会出现工作空间，如 @fig-workspace-access 所示，展开站点并点击“访问”，就能访问相应的工作空间。
+
+![Sa2web 工作空间访问](/images/workspace-access.png){#fig-workspace-access}
+
+## 网络隔离
+
+不同账号需要使用不同网络环境时，可以结合：
+
+- 云浏览器代理；
+- 云浏览器隔离网络；
+- 不同浏览器实例及配置。
+
+## 验收
+
+- [ ] 工作空间对应正确账号；
+- [ ] 用户只看到被授权的工作空间；
+- [ ] 浏览器和网络配置符合预期；
+- [ ] 登录状态可以持续使用。

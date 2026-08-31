@@ -1,0 +1,121 @@
+name: Deploy Quarto Books
+
+on:
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Quarto
+        uses: quarto-dev/quarto-actions/setup@v2
+
+      # ----------------------------
+      # Render English book
+      # ----------------------------
+
+      - name: Render English book
+        run: |
+          quarto render en --to html
+
+      # ----------------------------
+      # Render Chinese book
+      # ----------------------------
+
+      - name: Render Chinese book
+        run: |
+          quarto render zh --to html
+
+      # ----------------------------
+      # Assemble final website
+      # ----------------------------
+
+      - name: Assemble website
+        run: |
+          mkdir -p publish/en
+          mkdir -p publish/zh
+
+          cp -a en/_book/. publish/en/
+          cp -a zh/_book/. publish/zh/
+
+          cp site/index.html publish/index.html
+          cp site/robots.txt publish/robots.txt
+          cp site/BingSiteAuth.xml publish/BingSiteAuth.xml
+
+      - name: Generate sitemap
+        run: |
+          BASE_URL="https://quickstart.sa2web.com"
+          LASTMOD="$(date -u +%F)"
+
+          {
+            echo '<?xml version="1.0" encoding="UTF-8"?>'
+            echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+            find publish -type f -name '*.html' | sort | while read -r file; do
+              path="${file#publish}"
+              path="${path#/}"
+
+              if [ "$path" = "index.html" ]; then
+                loc="$BASE_URL/"
+              elif [ "${path##*/}" = "index.html" ]; then
+                loc="$BASE_URL/${path%index.html}"
+              else
+                loc="$BASE_URL/$path"
+              fi
+
+              echo '  <url>'
+              echo "    <loc>$loc</loc>"
+              echo "    <lastmod>$LASTMOD</lastmod>"
+              echo '  </url>'
+            done
+            echo '</urlset>'
+          } > publish/sitemap.xml
+
+      # 可选：看一下最终目录
+      - name: Show output
+        run: |
+          find publish -maxdepth 2 -type f | head -100
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: publish
+
+
+  deploy:
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+
+    steps:
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

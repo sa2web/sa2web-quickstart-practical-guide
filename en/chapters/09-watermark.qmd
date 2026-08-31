@@ -1,0 +1,98 @@
+# Enable Watermarks
+
+## Goal
+
+Add traceable watermark policies to remote access.
+
+## Suitable Scenarios
+
+- Contractors.
+- Customer support access to customer data.
+- Remote work.
+- BYOD.
+- Sensitive internal backends.
+- High-risk business pages.
+
+## Watermark Content Recommendations
+
+Use content that can identify the visitor and access time, for example:
+
+```text
+Username / employee ID
+Access time
+Company name
+Access environment identifier
+```
+
+Do not put new sensitive information into the watermark itself.
+
+## Recommended Combination
+
+```text
+User / group permissions
+      +
+Page sensitive content controls
+      +
+Watermarks
+      +
+Recording and replay
+```
+
+The value of watermarks is to increase the cost of distributing screenshots and improve traceability after the fact. They should not be described as absolute screenshot prevention.
+
+## Enable Site Watermarks
+
+Go to:
+
+```text
+Site Management > Site List
+Site Management > Inner Site List
+```
+
+Find the target site or inner site and click the "![](/images/site-config.png){width=22px}" button to enter the site or inner site configuration page:
+
+1. Enable **Visible Watermark** and **Invisible Watermark**.
+2. Save.
+3. Access again with a test account.
+4. Verify that the user frontend displays the watermark after accessing the site.
+
+When users open the site from the frontend, they can see the watermarked page, as shown in @fig-watermark.
+
+![Sa2web watermark](/images/site-with-watermark.png){#fig-watermark}
+
+The free edition does not support watermarking.
+
+## Cloud Browser Watermarks
+
+To add watermarks to sites accessed through Cloud Browser, enable the **Cloud Browser Watermark** switch in group management.
+
+Go to:
+
+```text
+Group Management > Group List
+```
+
+Click **Privileges** to open the group privilege settings page, as shown in @fig-group-privileges-3. Select **Visible Watermark** and **Invisible Watermark**, then save.
+
+![Sa2web group privilege settings](/images/group-privileges-2.png){#fig-group-privileges-3}
+
+When a user opens the Sa2web frontend and accesses the site, the site displays watermark content, as shown in @fig-cloud-browser-watermark.
+
+![Sa2web Cloud Browser watermark](/images/cloud-browser-watermark.png){#fig-cloud-browser-watermark}
+
+## Control Watermark Content
+
+Go to:
+
+```text
+Settings > System Settings
+```
+
+Open the system settings page and modify the watermark text, as shown in @fig-system-settings-watermark.
+
+![Sa2web system watermark settings](/images/system-settings-watermark.png){#fig-system-settings-watermark}
+
+## Acceptance Checklist
+
+- [ ] A watermark is displayed after the user frontend accesses the site.
+- [ ] A watermark is displayed after Cloud Browser accesses the site.

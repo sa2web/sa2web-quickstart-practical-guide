@@ -1,0 +1,75 @@
+# 开启内部站点访问
+
+## 目标
+
+让员工通过 Sa2web 访问 ERP、CRM、订单系统或内部管理后台。
+
+每个前端用户都有独立的远程内部站点浏览器配置文件。用户 A 访问内部站点并登录后，用户 B 再访问同一内部站点时不会继承用户 A 的登录状态，两人的浏览器数据互不影响。
+
+## 确认网络可达
+
+内部站点 URL 必须能被部署环境或浏览器节点访问。
+
+Sa2web 不替代底层网络连通性。浏览器节点仍然需要具备访问内部系统所需的路由、内网穿透、DNS、防火墙和 ACL 条件。
+
+## 添加内部站点
+
+进入：
+
+```text
+站点管理 > 内部站点列表
+```
+打开Sa2web 内部站点列表，如 @fig-inner-site-list 所示。
+
+![Sa2web 内部站点列表](/images/inner-site-list.png){#fig-inner-site-list}
+
+点击 **Add Site** 按钮，打开添加内部站点对话框,如 @fig-add-inner-site-dialog 所示。
+
+![Sa2web 添加内部站点](/images/add-inner-site-dialog.png){#fig-add-inner-site-dialog}
+
+填写：
+
+- 名称；
+- URL；
+- 简介；
+- Logo。
+
+## 分组授权
+
+在分组中把内部站点授权给业务用户。
+
+进入：
+
+```text
+分组管理 > 内部站点
+```
+打开内部站点授权页面，如 @fig-inner-site-group 所示。
+
+![Sa2web 内部站点授权](/images/inner-site-group.png){#fig-inner-site-group}
+
+选择需要授权的内部站点，然后点击“保存”按钮。
+
+授权后，用户可以在前端“内部系统”区域点击“进入”，如 @fig-inner-site-access 所示。
+
+![Sa2web 内部站点访问](/images/inner-site-access.png){#fig-inner-site-access}
+
+## 远程办公的典型链路
+
+```text
+员工普通浏览器
+   ↓
+Sa2web
+   ↓
+企业侧浏览器运行环境
+   ↓
+ERP / CRM / 内部后台
+```
+
+这样员工设备不需要直接连接内部站点，也不需要暴露内部系统地址。
+
+## 验收
+
+- [ ] 浏览器节点能访问内部 URL；
+- [ ] 授权用户能看到内部站点；
+- [ ] 未授权用户不可见；
+- [ ] 外部设备不需要直接连接内部站点。

@@ -1,0 +1,100 @@
+# Manage Users and Permissions
+
+## Goal
+
+Build a system of users, administrators, roles, permissions, and groups so frontend access and backend administration can be authorized by responsibility.
+
+## Create Users
+
+Go to:
+
+```text
+User Management > User List
+```
+
+The user list page is displayed, as shown in @fig-user-list.
+
+![Sa2web user list](/images/user-list.png){#fig-user-list}
+
+The user list mainly contains two types of users: normal users and collaboration users. Normal users can log in directly to the Sa2web frontend. Collaboration users are created automatically by collaboration links. Their usernames usually start with `v`, and they cannot enter the Sa2web frontend through the normal login page.
+
+Click **Add User** to open the add user dialog, as shown in @fig-add-user, and fill in the username, nickname, email, phone number, password, user type, and status.
+
+![Sa2web add user](/images/add-user.png){#fig-add-user}
+
+Normal users can log in at:
+
+```text
+https://<sa2web-domain>
+```
+
+or:
+
+```text
+https://<sa2web-domain>/app/login
+```
+
+## Create Administrators and Roles
+
+Go to:
+
+```text
+User Management > Admin List
+User Management > Role List
+User Management > Permission List
+```
+
+Create roles by responsibility. Do not let every administrator use the highest privilege level long term.
+
+### Add a Role
+
+Open the role list, as shown in @fig-role-list. Click **Add Role**, enter the role name, and save.
+
+![Sa2web role list](/images/role-list.png){#fig-role-list}
+
+### Add an Administrator
+
+Open the admin list and click **Add Admin**. The add admin dialog appears, as shown in @fig-add-admin. Fill in the username, password, email, phone number, status, and assigned role.
+
+![Sa2web add administrator](/images/add-admin.png){#fig-add-admin}
+
+### Permission Management
+
+Open the permission list, as shown in @fig-permission-management. Select a role and choose the permissions required by that role. Click **Save Permissions** in the lower-right corner to save.
+
+![Sa2web permission management](/images/permission-management.png){#fig-permission-management}
+
+### Disable Administrators and Users
+
+In the admin list or user list, click **Edit** and change the user status to **Inactive**.
+
+## Manage Frontend Resources with Groups
+
+A group can centrally manage frontend-visible resources, as shown in @fig-group-management-2:
+
+- Users.
+- SaaS sites.
+- Workspaces.
+- Inner sites.
+- Permissions.
+- Cloud Browser proxies.
+- Cloud Browser isolated networks.
+
+![Sa2web group management](/images/group-management-2.png){#fig-group-management-2}
+
+Create groups based on real business needs, for example:
+
+```text
+Operations Team
+Customer Support Team
+Finance Read-Only Team
+Contractor Collaboration Team
+Customer A Project Team
+```
+
+## Acceptance Checklist
+
+- [ ] Normal users cannot enter the admin console.
+- [ ] Administrators only have permissions required by their responsibilities.
+- [ ] User resources are managed through groups.
+- [ ] Unauthorized sites are invisible.

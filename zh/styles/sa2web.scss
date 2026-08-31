@@ -1,0 +1,14 @@
+/*-- scss:defaults --*/
+$primary: #d5232f;
+$body-color: #1d2129;
+$link-color: #c91f2b;
+$font-family-sans-serif: Inter, "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+$headings-font-weight: 750;
+/*-- scss:rules --*/
+:root { --sa2-red:#d5232f; --sa2-soft:#fff1f2; --sa2-line:#e6e8ec; }
+h1,h2,h3 { letter-spacing:-.02em; }
+.callout { border-radius:12px; }
+blockquote { border-left:4px solid var(--sa2-red); background:var(--sa2-soft); padding:1rem 1.2rem; border-radius:8px; }
+.figure img { border-radius:14px; }
+table { font-size:.94rem; }
+code { word-break:break-word; }

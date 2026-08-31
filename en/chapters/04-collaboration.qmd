@@ -1,0 +1,99 @@
+# Enable Collaboration Links
+
+## Goal
+
+Generate controlled access links for temporary users, contractors, or customers so they can access specified sites without owning normal accounts.
+
+## Create Collaboration Content
+
+Go to:
+
+```text
+Collaboration Content Management > Collaboration Content List
+```
+
+Create a collaboration content collection, as shown in @fig-create-collaboration-content, and fill in the collection number, title, and validity period.
+
+![Sa2web create collaboration collection](/images/create-collaboration-content.png){#fig-create-collaboration-content}
+
+Click the "![](/images/plus.png){width=20px}" button to add collaboration SaaS sites and site account categories, as shown in @fig-add-collaboration-content. One collaboration content collection can contain multiple site account categories.
+
+![Sa2web add collaboration SaaS site](/images/add-collaboration-content.png){#fig-add-collaboration-content}
+
+The collaboration content list is shown in @fig-collaboration-content-list.
+
+![Sa2web collaboration content list](/images/collaboration-content-list.png){#fig-collaboration-content-list}
+
+## Create a Standard Collaboration Link
+
+Go to:
+
+```text
+Collaboration Content Management > Collaboration Link List
+```
+
+Click the "![](/images/add-collaboration-url.png){width=80px}" button to open the add collaboration link dialog, as shown in @fig-add-collaboration-url-dialog.
+
+In the dialog, choose:
+
+- Collaboration content collection.
+- Browser instance.
+- Initial collaboration site to open.
+- Collaboration site path, which should start with `/`.
+- Whether to enable a collaboration access password.
+
+![Sa2web add collaboration link](/images/add-collaboration-url-dialog.png){#fig-add-collaboration-url-dialog}
+
+After adding it, the link appears in the collaboration link list, as shown in @fig-collaboration-url-list.
+
+![Sa2web collaboration link list](/images/collaboration-url-list.png){#fig-collaboration-url-list}
+
+In the list, click the "![](/images/link.png){width=20px}" button to copy the collaboration link to the clipboard. You can then send it to temporary users, contractors, or customers.
+
+Click the "![](/images/key.png){width=20px}" button to enable password access and view the password for the link. After temporary users open the link, they must enter the password to continue, as shown in @fig-collaboration-url-password.
+
+![Sa2web collaboration link with password input](/images/collaboration-url-password.png){#fig-collaboration-url-password}
+
+Click the "![](/images/unlock.png){width=20px}" button to disable password access.
+
+Standard collaboration link format:
+
+```text
+https://<APP_DOMAIN>/url/<uid>
+```
+
+Standard collaboration links are suitable for one user, one-time access, or small-scale distribution.
+
+## Super Collaboration Links
+
+If one link needs to support multiple users accessing at the same time or in batches, use a super collaboration link:
+
+```text
+https://<APP_DOMAIN>/urls/<collSn>
+```
+
+In the collaboration link list, click the "![](/images/super-collaboration-url.png){width=90px}" button to open the super collaboration link page.
+
+Click **Add** to open the add super collaboration link dialog, as shown in @fig-add-super-collaboration-url. You can configure:
+
+- Collaboration content collection.
+- Number of collaboration users allowed to access.
+- Initial collaboration site to open.
+- Collaboration site path, which should start with `/`.
+- Whether to enable a collaboration access password.
+
+![Sa2web add super collaboration link](/images/add-super-collaboration-url-dialog.png){#fig-add-super-collaboration-url}
+
+After adding it, the link appears in the super collaboration link list, as shown in @fig-super-collaboration-url-list.
+
+![Sa2web super collaboration link list](/images/super-collaboration-url-list.png){#fig-super-collaboration-url-list}
+
+Super collaboration links are suitable for bulk distribution, customer delivery, events, and similar scenarios.
+
+## Pre-Publishing Checklist
+
+- [ ] The link opens normally.
+- [ ] Only necessary sites are exposed.
+- [ ] The account type is correct.
+- [ ] The password access policy fits the current scenario.
+- [ ] The expiration time and allowed user count are correct.

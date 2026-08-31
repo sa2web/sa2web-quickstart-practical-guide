@@ -1,0 +1,60 @@
+# 保护目标地址
+
+## 目标
+
+启用 **加密 URL**，避免用户前端直接显示真实源站地址。
+
+
+## 适合场景
+
+- 供应商入口；
+- 特殊采购渠道；
+- 客户后台；
+- 内部系统；
+- 私有 SaaS；
+- 不希望协作用户直接知道的源站地址。
+
+## 开启加密 URL
+
+进入：
+
+```text
+站点管理 > 站点列表
+站点管理 > 内部站点列表
+```
+
+找到目标站点或者内部站点并点击"![](/images/site-config.png){width=22px}"按钮，进入站点/内部站点配置页面,如 @fig-encrypt-url-checked 所示：
+
+1. 启用“加密 URL”；
+2. 保存；
+3. 用测试账号重新访问；
+4. 验证用户前端不再直接显示源站地址。
+
+![Sa2web 启用加密URL](/images/encrypt-url-checked.png){#fig-encrypt-url-checked}
+
+用户从前端访问该加密URL的站点，效果如 @fig-encrypted-url 所示。
+
+![Sa2web 加密 URL](/images/encrypted-url.png){#fig-encrypted-url}
+
+打开浏览器的开发者工具栏，查看源码，可以看到链接地址也是加密的，如 @fig-encryped-url-hrefs 所示。
+
+![Sa2web 加密链接](/images/encryped-url-hrefs.png){#fig-encryped-url-hrefs}
+
+## 与协作链接结合
+
+推荐：
+
+```text
+协作内容
+  ↓
+SaaS 站点
+  ↓
+加密 URL
+  ↓
+协作链接
+```
+
+## 验收
+
+- [ ] 用户前端不直接显示真实 URL；
+- [ ] 远程 Browser 正常打开站点；

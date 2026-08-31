@@ -1,0 +1,59 @@
+# Protect Target URLs
+
+## Goal
+
+Enable **Encrypted URL** to prevent the user frontend from directly showing the real origin address.
+
+## Suitable Scenarios
+
+- Supplier portals.
+- Special procurement channels.
+- Customer backends.
+- Internal systems.
+- Private SaaS.
+- Origin addresses that collaboration users should not know directly.
+
+## Enable Encrypted URL
+
+Go to:
+
+```text
+Site Management > Site List
+Site Management > Inner Site List
+```
+
+Find the target site or inner site and click the "![](/images/site-config.png){width=22px}" button to enter the site or inner site configuration page, as shown in @fig-encrypt-url-checked:
+
+1. Enable **Encrypted URL**.
+2. Save.
+3. Access again with a test account.
+4. Verify that the user frontend no longer directly displays the origin address.
+
+![Sa2web enable Encrypted URL](/images/encrypt-url-checked.png){#fig-encrypt-url-checked}
+
+When users access the site with encrypted URL enabled from the frontend, the result is shown in @fig-encrypted-url.
+
+![Sa2web encrypted URL](/images/encrypted-url.png){#fig-encrypted-url}
+
+Open the browser developer tools and inspect the source. The link address is also encrypted, as shown in @fig-encryped-url-hrefs.
+
+![Sa2web encrypted link](/images/encryped-url-hrefs.png){#fig-encryped-url-hrefs}
+
+## Combine with Collaboration Links
+
+Recommended flow:
+
+```text
+Collaboration content
+  ->
+SaaS site
+  ->
+Encrypted URL
+  ->
+Collaboration link
+```
+
+## Acceptance Checklist
+
+- [ ] The user frontend does not directly show the real URL.
+- [ ] The remote browser opens the site normally.

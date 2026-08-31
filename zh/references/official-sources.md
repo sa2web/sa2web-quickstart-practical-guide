@@ -1,0 +1,27 @@
+# 官方资料索引
+
+- https://www.sa2web.com/
+- https://www.sa2web.com/en/
+- https://www.sa2web.com/en/core/
+- https://www.sa2web.com/en/features/
+- https://www.sa2web.com/docs/zh/
+- https://www.sa2web.com/docs/zh/install/prerequisites
+- https://www.sa2web.com/docs/zh/install/deploy
+- https://www.sa2web.com/docs/zh/concepts
+- https://www.sa2web.com/docs/zh/quick-start
+- https://www.sa2web.com/docs/zh/admin/users
+- https://www.sa2web.com/docs/zh/admin/machines-browsers
+- https://www.sa2web.com/docs/zh/admin/sites
+- https://www.sa2web.com/docs/zh/admin/inner-sites
+- https://www.sa2web.com/docs/zh/admin/groups
+- https://www.sa2web.com/docs/zh/admin/site-config
+- https://www.sa2web.com/docs/zh/admin/workspaces
+- https://www.sa2web.com/docs/zh/admin/collaboration
+- https://www.sa2web.com/docs/zh/admin/scripts-plugins
+- https://www.sa2web.com/docs/zh/enterprise/replay
+- https://www.sa2web.com/docs/zh/operations/troubleshooting
+- https://www.sa2web.com/docs/zh/appendix/passkey
+- https://www.sa2web.com/docs/zh/appendix/script-api
+- https://www.sa2web.com/docs/zh/appendix/mcp
+- https://www.sa2web.com/docs/zh/appendix/cli
+- https://docs.docker.com/engine/install/ubuntu/

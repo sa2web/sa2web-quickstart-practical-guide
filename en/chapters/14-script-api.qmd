@@ -1,0 +1,729 @@
+# Use the Script API {#sec-script-api}
+
+## Goal
+
+Describe the `window.api` capabilities available to Sa2web page scripts and standard interface interception scripts, so scripts in site configuration, inner site configuration, account configuration, and plugin scripts can be written more reliably.
+
+The Script API has five main categories:
+
+| API | Purpose |
+|---|---|
+| `api.config` | Reads custom configuration; currently valid only under collaboration links |
+| `api.http` | Sends HTTP requests while bypassing page CORS restrictions |
+| `api.user` | Reads and writes data scoped by user, site, account, or device |
+| `api.dom` | Queries DOM, checks visibility, listens for element changes, and creates overlays |
+| `api.utils` | Waits for conditions and runs JavaScript in the page |
+| `api.header()` | Reads recorded request or response headers |
+
+Page scripts and standard interface interception scripts can use `window.api`. SSE scripts only guarantee that `data` is passed in and usually do not depend on `window.api`.
+
+## Overall Structure
+
+In scripts, you can use `api` directly or access it through `window.api`:
+
+```ts
+interface Window {
+  api: {
+    user: UserApi;
+    config: Record<string, unknown>;
+    http: HttpApi;
+    dom: DomApi;
+    utils: UtilsApi;
+    header(headerName: string, isRequestHeader: boolean): Promise<string | string[] | undefined>;
+  };
+}
+```
+
+Example:
+
+```js
+const apiBase = api.config.apiBase;
+const userToken = await api.user.get('token');
+const submit = api.dom.querySelector(document, 'button[type="submit"]');
+const profile = await api.http.ajax({ url: `http://192.168.1.111:8080/profile` });
+```
+
+::: {.callout-tip}
+Prefer Sa2web's `api.dom` query tools in scripts. They support both CSS selectors and XPath selectors, making them more suitable for complex business pages than `document.querySelector()` alone.
+:::
+
+## `api.config`
+
+`api.config` reads custom configuration from the site script environment.
+
+```ts
+config: Record<string, unknown>
+```
+
+Example:
+
+```js
+const apiBase = api.config.apiBase;
+const featureEnabled = api.config.featureEnabled === true;
+```
+
+## `api.http`
+
+`api.http` provides HTTP request tools for user scripts. `api.http.ajax` executes the actual request in the browser main process, so it is not restricted by the page's CORS policy.
+
+### `api.http.ajax(options)`
+
+Sends an HTTP request.
+
+```ts
+ajax(options: {
+  url: string;
+  method?: string;
+  data?: any;
+  headers?: Record<string, string>;
+  timeout?: number;
+  dataType?: 'json' | 'text' | 'html' | 'arrayBuffer';
+  contentType?: string;
+  processData?: boolean;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data?: any;
+  error?: string;
+  timeout?: boolean;
+}>
+```
+
+Parameters:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `url` | `string` | - | Request URL. |
+| `method` | `string` | `GET` | HTTP method. |
+| `data` | `any` | - | Request data. `GET` and `HEAD` requests are serialized into the query string; other methods write it into the request body. |
+| `headers` | `Record<string, string>` | `{}` | Request headers. |
+| `timeout` | `number` | - | Timeout in milliseconds. Only takes effect when greater than `0`. |
+| `dataType` | `'json' \| 'text' \| 'html' \| 'arrayBuffer'` | `json` | Response parsing mode. |
+| `contentType` | `string` | `application/x-www-form-urlencoded; charset=UTF-8` | Request body Content-Type. |
+| `processData` | `boolean` | `true` | Whether to serialize `data` automatically. When set to `false`, `data` is passed directly as the request body. |
+
+Return value:
+
+| Field | Type | Description |
+|---|---|---|
+| `ok` | `boolean` | `true` for HTTP 2xx responses; `false` for parse errors, HTTP errors, timeouts, aborts, or network errors. |
+| `status` | `number` | HTTP status code. `0` means timeout, abort, or network-layer failure. |
+| `statusText` | `string` | HTTP status text. For non-HTTP failures, it is `timeout`, `abort`, or `error`. |
+| `data` | `any` | Parsed response data. |
+| `error` | `string` | Error message for parse failures or non-HTTP failures. |
+| `timeout` | `boolean` | `true` when the request was aborted because of the configured timeout. |
+
+GET request example:
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/profile',
+  method: 'GET',
+  dataType: 'json',
+  timeout: 10000
+});
+
+if (ret.ok) {
+  console.log(ret.data);
+}
+```
+
+POST request example:
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/items',
+  method: 'POST',
+  contentType: 'application/json',
+  data: { name: 'demo' }
+});
+
+if (!ret.ok) {
+  console.warn(ret.status, ret.error || ret.statusText);
+}
+```
+
+## `api.user`
+
+`api.user` reads and writes user-related data during script execution. It can isolate storage scope across different dimensions.
+
+Common parameters:
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `site` | `boolean` | `false` | Whether to isolate by site |
+| `account` | `boolean` | `false` | Whether to isolate by site account or workspace name |
+| `did` | `boolean` | `false` | Whether to isolate by device |
+
+Dimension recommendations:
+
+| Scenario | Recommendation |
+|---|---|
+| Share data for the same user across sites | `site=false` |
+| Store data independently for each site | `site=true` |
+| Isolate different accounts under the same site | `account=true` |
+| Isolate the same user across different devices | `did=true` |
+
+### `api.user.put()`
+
+Saves a key-value pair.
+
+```ts
+put(
+  name: string,
+  value: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+Example:
+
+```js
+await api.user.put('token', 'abc123');
+await api.user.put('draft:lastOrderId', 'A-1001', true, true);
+```
+
+### `api.user.get()`
+
+Reads a specified key.
+
+```ts
+get(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ value: string | null, status: boolean }>
+```
+
+Example:
+
+```js
+const ret = await api.user.get('token');
+if (ret.status && ret.value) {
+  console.log(ret.value);
+}
+```
+
+### `api.user.remove()`
+
+Deletes a specified key.
+
+```ts
+remove(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+Example:
+
+```js
+await api.user.remove('token');
+await api.user.remove('draft:lastOrderId', true, true);
+```
+
+### `api.user.incr()`
+
+Increments the numeric value of a specified key by a step. If the key does not exist, it is created.
+
+```ts
+incr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+Example:
+
+```js
+const ret = await api.user.incr('submitCount', 1, true);
+console.log(ret.value);
+```
+
+### `api.user.decr()`
+
+Decrements the numeric value of a specified key by a step. If the key does not exist, it is created with a negative initial value.
+
+```ts
+decr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+Example:
+
+```js
+const ret = await api.user.decr('remainingQuota', 1, true, true);
+console.log(ret.value);
+```
+
+### `api.user.startsWith()`
+
+Finds data by key-name prefix.
+
+```ts
+startsWith(
+  prefix: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<Array<{ name: string, value: string }>>
+```
+
+Example:
+
+```js
+const items = await api.user.startsWith('cache:', true);
+for (const item of items) {
+  console.log(item.name, item.value);
+}
+```
+
+### `api.user.countAll()`
+
+Counts records for a specified key name.
+
+```ts
+countAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+Example:
+
+```js
+const ret = await api.user.countAll('token', true);
+console.log(ret.value);
+```
+
+### `api.user.sumAll()`
+
+Calculates the numeric sum of values for a specified key name.
+
+```ts
+sumAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+Example:
+
+```js
+const ret = await api.user.sumAll('score', true);
+console.log(ret.value);
+```
+
+## `api.dom`
+
+`api.dom` provides DOM query, visibility checking, connection listeners, resize listeners, and overlay creation.
+
+Selector support:
+
+| Syntax | Description |
+|---|---|
+| `.button.primary` | CSS selector |
+| `xpath://div[@id="app"]` | XPath selector |
+| `.dialog:p` | Returns the parent element of the matched element |
+| `.dialog:p2` | Returns the ancestor two levels above the matched element |
+| `.header:bottom` | Uses the lower boundary of an element in overlay boundary methods |
+| `.sidebar:right` | Uses the right boundary of an element in overlay boundary methods |
+
+See also @sec-matchSelector.
+
+### `api.dom.createMutationObserver()`
+
+Creates and caches a `MutationObserver`. If an observer with the same binding name already exists on the target element, the existing observer is returned directly.
+
+```ts
+createMutationObserver(
+  ele: Element,
+  bindStr: string,
+  childList: boolean,
+  subtree: boolean,
+  attributes: boolean,
+  characterData: boolean,
+  fn: (mutations: MutationRecord[]) => void
+): MutationObserver
+```
+
+Example:
+
+```js
+api.dom.createMutationObserver(
+  document.body,
+  '__bodyObserver__',
+  true,
+  true,
+  false,
+  false,
+  (mutations) => console.log(mutations)
+);
+```
+
+### `api.dom.querySelector()`
+
+Queries the first matching element.
+
+```ts
+querySelector(doc: Document, cssOrXPathSelector: string): HTMLElement | null
+```
+
+Example:
+
+```js
+const el = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+```
+
+### `api.dom.querySelectorAll()`
+
+Queries all matching elements.
+
+```ts
+querySelectorAll(doc: Document, cssOrXPathSelector: string): HTMLElement[]
+```
+
+Example:
+
+```js
+const buttons = api.dom.querySelectorAll(document, 'button.primary');
+buttons.forEach((button) => console.log(button.textContent));
+```
+
+### `api.dom.isVisible()`
+
+Checks whether an element is in a visible intersection area.
+
+```ts
+isVisible(ele: HTMLElement): Promise<boolean>
+```
+
+Example:
+
+```js
+const el = api.dom.querySelector(document, '.submit');
+if (el && await api.dom.isVisible(el)) {
+  console.log('visible');
+}
+```
+
+### `api.dom.getVisibleRect()`
+
+Gets the element's current visible rectangle.
+
+```ts
+getVisibleRect(ele: HTMLElement): Promise<DOMRectReadOnly>
+```
+
+Example:
+
+```js
+const el = api.dom.querySelector(document, '.panel');
+if (el) {
+  const rect = await api.dom.getVisibleRect(el);
+  console.log(rect.left, rect.top, rect.width, rect.height);
+}
+```
+
+### `api.dom.getConnectListeners()`
+
+Gets the current connection listener list.
+
+```ts
+getConnectListeners(): Array<{
+  querySelector: string;
+  callback: (isConnected: boolean) => void;
+  isConnected?: boolean;
+}>
+```
+
+Example:
+
+```js
+api.dom.addConnectListener('.modal', () => {});
+console.log(api.dom.getConnectListeners());
+```
+
+### `api.dom.addConnectListener()`
+
+Listens for an element appearing in or disappearing from the document.
+
+```ts
+addConnectListener(
+  cssOrXPathSelector: string,
+  callback: (isConnected: boolean) => void
+): void
+```
+
+Example:
+
+```js
+api.dom.addConnectListener('.dialog', (isConnected) => {
+  console.log('dialog:', isConnected);
+});
+```
+
+### `api.dom.removeConnectListener()`
+
+Removes connection listeners for specified selectors.
+
+```ts
+removeConnectListener(cssOrXPathSelectors: string[]): void
+```
+
+Example:
+
+```js
+api.dom.removeConnectListener(['.dialog', '.toast']);
+```
+
+### `api.dom.addResizeListener()`
+
+Listens for size and position changes of the target element. If the element does not exist, the callback receives an empty rectangle.
+
+```ts
+addResizeListener(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  callback: (rect: DOMRect) => void,
+  createObserver?: boolean,
+  delayTime?: number
+): ResizeObserver | (() => void)
+```
+
+Example:
+
+```js
+api.dom.addResizeListener('.target', '__targetResize__', (rect) => {
+  console.log(rect.width, rect.height);
+});
+```
+
+### `api.dom.createOverlayBy()`
+
+Creates a fixed-position overlay that follows the visible area of a target element.
+
+```ts
+createOverlayBy(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  createObserver?: boolean,
+  delayTime?: number,
+  fn?: (rect: DOMRectReadOnly) => void
+): HTMLElement
+```
+
+Example:
+
+```js
+const overlay = api.dom.createOverlayBy('.target', '__overlay__');
+overlay.style.border = '2px solid #f00';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+### `api.dom.createOverlayByBorder()`
+
+Creates a fixed-position overlay from top, right, bottom, and left boundaries. Boundary values can be pixel numbers or selectors.
+
+```ts
+createOverlayByBorder(
+  bindWindowStr: string,
+  top: string | number,
+  right: string | number,
+  bottom: string | number,
+  left: string | number,
+  createObserver?: boolean,
+  delayTime?: number
+): HTMLElement
+```
+
+Example:
+
+```js
+const panel = api.dom.createOverlayByBorder(
+  '__centerPanel__',
+  'header:bottom',
+  20,
+  'footer:top',
+  '.sidebar:right'
+);
+panel.style.background = 'rgba(0,0,0,.08)';
+```
+
+## `api.utils`
+
+`api.utils` provides common helper capabilities for waiting on page conditions and executing code in the page context.
+
+### `api.utils.wait()`
+
+Polls until the condition function returns a truthy value. Throws an error on timeout.
+
+```ts
+wait(
+  fn: () => boolean,
+  timeoutMs: number,
+  intervalMs?: number
+): Promise<void>
+```
+
+Example:
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.ready'),
+  10000,
+  200
+);
+```
+
+### `api.utils.runScript()`
+
+Runs JavaScript code in the current page and returns the result.
+
+```ts
+runScript(
+  code: string,
+  callback?: (result: any, error: Error) => void
+): Promise<any>
+```
+
+Example:
+
+```js
+const title = await api.utils.runScript('document.title');
+console.log(title);
+```
+
+Callback form:
+
+```js
+await api.utils.runScript('document.body.innerText.slice(0, 100)', (result, error) => {
+  if (error) {
+    console.error(error);
+    return;
+  }
+  console.log(result);
+});
+```
+
+## `api.header()`
+
+`api.header(headerName, isRequestHeader)` reads request or response headers recorded by the remote browser.
+
+```ts
+header(
+  headerName: string,
+  isRequestHeader: boolean
+): Promise<string | string[] | undefined>
+```
+
+Parameters:
+
+| Parameter | Type | Description |
+|---|---|---|
+| `headerName` | `string` | Request or response header name. It is converted to lowercase when read |
+| `isRequestHeader` | `boolean` | `true` reads request headers; `false` reads response headers |
+
+Example:
+
+```js
+const cookie = await api.header('cookie', true);
+const setCookie = await api.header('set-cookie', false);
+```
+
+Notes:
+
+- Only request or response headers that have been added in site configuration are recorded.
+- Request headers come from requests sent by the remote browser.
+- Response headers come from responses received by the remote browser.
+- Response headers may return a string array.
+
+## Common Script Combinations
+
+### Wait for an Element and Click It
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.login-button'),
+  10000,
+  200
+);
+
+const button = api.dom.querySelector(document, '.login-button');
+button?.click();
+```
+
+### Find an English Button with XPath
+
+```js
+const submit = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+
+if (submit && await api.dom.isVisible(submit)) {
+  submit.click();
+}
+```
+
+### Save Page State
+
+```js
+const count = await api.user.incr('visitCount', 1, true, true);
+await api.user.put('lastTitle', document.title, true, true);
+
+console.log(count.value);
+```
+
+### Add an Overlay to an Area of Interest
+
+```js
+const overlay = api.dom.createOverlayBy('.customer-phone', '__phoneMask__');
+overlay.style.background = '#fff';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+## Usage Principles
+
+Manage scripts like business code:
+
+- Limit matching URLs so scripts do not run on unrelated pages.
+- Give scripts clear names for rollback and troubleshooting.
+- Verify first on a test site or test account.
+- Regression-test scripts that depend on DOM selectors.
+- Use clear prefixes for stored data, such as `cache:`, `draft:`, and `state:`.
+- Do not hard-code secrets, long-lived tokens, or account passwords into scripts.
+- Record the reason for script changes and perform code review when necessary.
+
+## Troubleshooting Checklist
+
+| Problem | What to check |
+|---|---|
+| `api` does not exist | Confirm whether the script type supports `window.api`; SSE scripts should not depend on it |
+| Element cannot be found | Check whether the URL matches, the page has finished loading, and the selector has changed |
+| XPath does not work | Confirm that the `xpath://` prefix is used |
+| Header cannot be read | Add the corresponding request or response header name in site configuration first |
+| User data mixes across scopes | Check the `site`, `account`, and `did` dimension parameters |
+| Overlay position is abnormal | Check whether the target element is visible and whether boundary selectors are correct |
+| Script affects other pages | Narrow the matching URL or add page-condition checks at the start of the script |

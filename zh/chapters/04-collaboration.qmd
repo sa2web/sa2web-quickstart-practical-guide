@@ -1,0 +1,99 @@
+# 开启协作链接
+
+## 目标
+
+为临时用户、外包人员或客户生成受控访问链接，让他们在不拥有正式账号的情况下访问指定站点。
+
+## 创建协作内容
+
+进入：
+
+```text
+协作内容管理 > 协作内容列表
+```
+
+创建协作内容集合，如 @fig-create-collaboration-content 所示， 填写集合编号、标题和有效期。
+
+![Sa2web 创建协作集合](/images/create-collaboration-content.png){#fig-create-collaboration-content}
+
+点击“![](/images/plus.png){width=20px}”按钮，添加协作 SaaS 站点和站点账号分类, 如 @fig-add-collaboration-content 所示。一个协作内容集合可以包含多个站点账号分类。
+
+![Sa2web 添加协作 SaaS 站点](/images/add-collaboration-content.png){#fig-add-collaboration-content}
+
+以下是协作内容列表，如 @fig-collaboration-content-list 所示。
+
+![Sa2web 协作内容列表](/images/collaboration-content-list.png){#fig-collaboration-content-list}
+
+## 创建普通协作链接
+
+进入：
+
+```text
+协作内容管理 > 协作链接列表
+```
+
+点击“![](/images/add-collaboration-url.png){width=80px}”按钮，打开添加协作链接对话框，如 @fig-add-collaboration-url-dialog 所示。
+
+在对话框中选择：
+
+- 协作内容集合；
+- 浏览器实例；
+- 首次跳转的协作站点；
+- 协作站点路径，路径应以 `/` 开头；
+- 是否开启协作访问密码。
+
+![Sa2web 添加协作链接](/images/add-collaboration-url-dialog.png){#fig-add-collaboration-url-dialog}
+
+添加完之后，就会在协作链接列表里显示，如 @fig-collaboration-url-list 所示。
+
+![Sa2web 协作链接列表](/images/collaboration-url-list.png){#fig-collaboration-url-list}
+
+在列表中点击“![](/images/link.png){width=20px}”按钮，可以复制协作链接到剪贴板。复制后即可发送给临时用户、外包人员或客户。
+
+点击“![](/images/key.png){width=20px}”按钮，可以开启密码访问，并查看该链接对应的访问密码。临时用户打开链接后，需要输入密码才能继续访问,如 @fig-collaboration-url-password 所示。
+
+![Sa2web 带有密码输入的协作链接](/images/collaboration-url-password.png){#fig-collaboration-url-password}
+
+点击“![](/images/unlock.png){width=20px}”按钮，可以关闭密码访问。
+
+普通协作链接格式：
+
+```text
+https://<APP_DOMAIN>/url/<uid>
+```
+
+普通协作链接适合单个用户、一次性访问或少量分发。
+
+## 超级协作链接
+
+如果一个链接需要承载多个用户同时或分批访问，可以使用超级协作链接：
+
+```text
+https://<APP_DOMAIN>/urls/<collSn>
+```
+
+在协作链接列表中点击“![](/images/super-collaboration-url.png){width=90px}”按钮，进入超级协作链接页面。
+
+点击 **Add** 按钮，打开添加超级协作链接对话框,如 @fig-add-super-collaboration-url 所示，可以设置：
+
+- 协作内容集合；
+- 允许访问的协作用户数量；
+- 首次跳转的协作站点；
+- 协作站点路径，路径应以 `/` 开头；
+- 是否开启协作访问密码。
+
+![Sa2web 添加超级协作链接](/images/add-super-collaboration-url-dialog.png){#fig-add-super-collaboration-url}
+
+添加完之后，将在超级协作链接列表里显示，如 @fig-super-collaboration-url-list 所示。
+
+![Sa2web 超级协作链接列表](/images/super-collaboration-url-list.png){#fig-super-collaboration-url-list}
+
+超级协作链接适合批量分发、客户交付、活动访问等场景。
+
+## 发布前检查
+
+- [ ] 链接能正常打开；
+- [ ] 只开放必要站点；
+- [ ] 账号类型正确；
+- [ ] 密码访问策略符合当前场景；
+- [ ] 过期时间和可访问人数设置正确。

@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sa2web Quickstart and Practical Guide | Sa2web 快速入门与实战指南</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Sa2web Quickstart and Practical Guide is a bilingual hands-on book for deploying Sa2web, building enterprise cloud browser access, SaaS access control, inner site access, workspaces, permissions, audits, watermarking, and MCP / AI Agent browser workflows.">
+  <meta name="keywords" content="Sa2web, Sa2web guide, Sa2web tutorial, Sa2web quickstart, remote browser, cloud browser, browser bastion, enterprise browser, SaaS access control, inner site access, MCP browser, AI Agent browser access, 企业远程浏览器, 云浏览器, 浏览器堡垒, Sa2web 教程, Sa2web 快速入门">
+  <meta name="author" content="Alex Mercer">
+  <meta name="robots" content="index,follow">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Sa2web Quickstart and Practical Guide">
+  <meta property="og:description" content="A bilingual practical guide to Sa2web: from private deployment to enterprise remote browser access governance.">
+  <meta property="og:url" content="https://quickstart.sa2web.com/">
+  <meta property="og:image" content="en/images/cover.png">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="zh_CN">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Sa2web Quickstart and Practical Guide">
+  <meta name="twitter:description" content="Deploy Sa2web and build controlled, auditable enterprise browser access for SaaS, inner sites, workspaces, and AI Agents.">
+  <meta name="twitter:image" content="en/images/cover.png">
+  <link rel="alternate" hreflang="en" href="en/">
+  <link rel="alternate" hreflang="zh-CN" href="zh/">
+  <link rel="alternate" hreflang="x-default" href="en/">
+  <link rel="canonical" href="https://quickstart.sa2web.com/">
+  <link rel="icon" href="en/images/favicon.svg" type="image/svg+xml">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f172a;
+      --bg-gradient: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                      radial-gradient(at 100% 0%, rgba(20, 184, 166, 0.15) 0px, transparent 50%),
+                      radial-gradient(at 50% 100%, rgba(15, 23, 42, 0.8) 0px, transparent 50%);
+      --panel: rgba(30, 41, 59, 0.7);
+      --panel-hover: rgba(30, 41, 59, 0.9);
+      --border: rgba(255, 255, 255, 0.1);
+      --border-hover: rgba(99, 102, 241, 0.4);
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --brand: #6366f1;
+      --brand-hover: #4f46e5;
+      --accent: #14b8a6;
+      --shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+      --glow: 0 0 25px rgba(99, 102, 241, 0.25);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f8fafc;
+        --bg-gradient: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.08) 0px, transparent 50%),
+                        radial-gradient(at 100% 0%, rgba(20, 184, 166, 0.08) 0px, transparent 50%);
+        --panel: rgba(255, 255, 255, 0.8);
+        --panel-hover: #ffffff;
+        --border: rgba(226, 232, 240, 0.8);
+        --border-hover: rgba(99, 102, 241, 0.3);
+        --ink: #0f172a;
+        --muted: #64748b;
+        --shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.08);
+        --glow: 0 0 25px rgba(99, 102, 241, 0.15);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      transition: background-color 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--bg);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .page {
+      width: min(1400px, calc(100% - 48px));
+      margin: 0 auto;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 32px 0 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.125rem;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      box-shadow: var(--glow);
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    nav {
+      display: flex;
+      gap: 10px;
+    }
+
+    nav a {
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    nav a:hover {
+      color: var(--ink);
+      border-color: var(--border-hover);
+      transform: translateY(-1px);
+    }
+
+    /* Hero Section */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+      gap: 48px;
+      align-items: center;
+      padding: 60px 0 80px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(20, 184, 166, 0.1);
+      border: 1px solid rgba(20, 184, 166, 0.2);
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 13px;
+      margin-bottom: 20px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(36px, 5vw, 56px);
+      line-height: 1.15;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, var(--ink) 60%, var(--muted));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 1.125rem;
+      line-height: 1.7;
+      max-width: 600px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 36px;
+    }
+
+    .button {
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 0 24px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 15px;
+      text-decoration: none;
+      box-shadow: var(--shadow);
+    }
+
+    .button:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-hover);
+    }
+
+    .button.primary {
+      border: none;
+      color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+      box-shadow: var(--glow);
+    }
+
+    .button.primary:hover {
+      opacity: 0.95;
+      box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Cover Styling */
+    .cover {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .cover::before {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      background: linear-gradient(135deg, var(--brand), var(--accent));
+      filter: blur(80px);
+      opacity: 0.25;
+      z-index: -1;
+      border-radius: 50%;
+    }
+
+    .cover img {
+      width: min(100%, 320px);
+      height: auto;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      transform: perspective(1000px) rotateY(-8deg) rotateX(4deg);
+      transition: transform 0.5s ease;
+    }
+
+    .cover:hover img {
+      transform: perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1.02);
+    }
+
+    /* Sections General */
+    .section {
+      padding: 60px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-heading {
+      max-width: 640px;
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(24px, 3vw, 32px);
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .section-heading p {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    /* Why How What Cards */
+    .why-how-what {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      padding: 28px;
+      box-shadow: var(--shadow);
+    }
+
+    .card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-4px);
+    }
+
+    .card h3 {
+      margin: 0 0 12px;
+      font-size: 20px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* Features Grid */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .feature {
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+    }
+
+    .feature:hover {
+      border-color: var(--border-hover);
+      background: var(--panel-hover);
+    }
+
+    .feature strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 15px;
+      color: var(--ink);
+    }
+
+    .feature span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    /* Language Band */
+    .language-band {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+    }
+
+    .language-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+    }
+
+    .language-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .language-card h3 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+
+    .language-card p {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .language-card a {
+      align-self: flex-start;
+      display: inline-flex;
+      height: 42px;
+      align-items: center;
+      padding: 0 20px;
+      border-radius: 10px;
+      background: var(--ink);
+      color: var(--bg);
+      font-weight: 700;
+      font-size: 14px;
+      text-decoration: none;
+    }
+
+    .language-card a:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 0 60px;
+      color: var(--muted);
+      font-size: 14px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    footer a {
+      color: var(--brand);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero, .why-how-what, .language-band {
+        grid-template-columns: 1fr;
+      }
+      .cover {
+        margin-top: 20px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .actions {
+        flex-direction: column;
+      }
+      .button {
+        width: 100%;
+      }
+    }
+  </style>
+
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Book",
+      "name": "Sa2web Quickstart and Practical Guide",
+      "url": "https://quickstart.sa2web.com/",
+      "alternateName": "Sa2web 快速入门与实战指南",
+      "author": {
+        "@type": "Person",
+        "name": "Alex Mercer"
+      },
+      "inLanguage": ["zh-CN", "en"],
+      "description": "A bilingual practical guide to deploying Sa2web and building enterprise remote browser access governance.",
+      "about": [
+        "Sa2web",
+        "remote browser",
+        "cloud browser",
+        "SaaS access control",
+        "inner site access",
+        "MCP browser"
+      ]
+    }
+  </script>
+</head>
+<body>
+  <div class="page">
+    <header aria-label="Site header">
+      <a class="brand" href="./" aria-label="Sa2web Guide home">
+        <span class="brand-mark">S2</span>
+        <span>Sa2web Guide</span>
+      </a>
+      <nav aria-label="Book languages">
+        <a href="en/">English</a>
+        <a href="zh/">简体中文</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div>
+          <span class="eyebrow">Enterprise Remote Browser Guide</span>
+          <h1 id="hero-title">Sa2web<br> Quickstart and Practical Guide</h1>
+          <p class="subtitle">
+            A bilingual hands-on book for enterprise remote browsers, cloud browser governance, SaaS access control, inner site access, audit replay, and MCP / AI Agent browser workflows.
+          </p>
+          <div class="actions" aria-label="Primary reading actions">
+            <a class="button primary" href="en/">
+              Read in English
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a class="button" href="zh/">阅读中文版</a>
+          </div>
+        </div>
+        <div class="cover" aria-hidden="true">
+          <img src="en/images/cover.png" alt="Sa2web Book Cover">
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="why-how-what-title">
+        <div class="section-heading">
+          <h2 id="why-how-what-title">Why, How, What</h2>
+          <p>Understand Sa2web through the problem it solves, the rollout path it supports, and the access system you can build with it.</p>
+        </div>
+        <div class="why-how-what">
+          <article class="card">
+            <h3>Why</h3>
+            <p>Enterprise access to SaaS, business backends, and internal systems often scatters accounts, sessions, cookies, sensitive data, and operation traces across local devices. Sa2web centralizes entries, permissions, session environments, and audits.</p>
+          </article>
+          <article class="card">
+            <h3>How</h3>
+            <p>The book follows a practical rollout path: private deployment, machines and browser instances, SaaS sites, workspaces, collaboration links, group permissions, URL protection, watermarks, recording, replay, scripts, and MCP setup.</p>
+          </article>
+          <article class="card">
+            <h3>What</h3>
+            <p>After reading, you can build a deliverable, manageable, and diagnosable enterprise remote browser access solution for employees, temporary users, and AI Agents operating inside permission boundaries.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="problem-title">
+        <div class="section-heading">
+          <h2 id="problem-title">What Problem Does Sa2web Solve?</h2>
+          <p>Sa2web addresses the operational and security risks created when enterprise web access is scattered across local browsers and unmanaged devices.</p>
+        </div>
+        <div class="features">
+          <div class="feature"><strong>Scattered Sessions</strong><span>Accounts, cookies, sessions, and browser profiles stay on employee endpoints.</span></div>
+          <div class="feature"><strong>Credential Exposure</strong><span>SaaS accounts or shared business logins may be handed directly to users.</span></div>
+          <div class="feature"><strong>Weak Access Boundaries</strong><span>Contractors, customers, suppliers, and temporary users need access without full account ownership.</span></div>
+          <div class="feature"><strong>Hidden System Leakage</strong><span>Internal URLs, target addresses, business parameters, and sensitive pages can be exposed.</span></div>
+          <div class="feature"><strong>Data Copy Risks</strong><span>Copying, downloading, and sharing sensitive content is difficult to control consistently.</span></div>
+          <div class="feature"><strong>Offboarding Gaps</strong><span>Role changes, project endings, and employee departures leave sessions hard to recover.</span></div>
+          <div class="feature"><strong>Missing Evidence</strong><span>Incidents are harder to investigate without replayable browser operation records.</span></div>
+          <div class="feature"><strong>AI Agent Access</strong><span>AI tools need browser access to business pages, but inside clear permission boundaries.</span></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="how-title">
+        <div class="section-heading">
+          <h2 id="how-title">How Sa2web Works</h2>
+          <p>Users still open pages from their own browsers, but the real target sites are accessed by remote browsers running in a controlled server environment.</p>
+        </div>
+        <div class="features">
+          <div class="feature"><strong>Remote Browser Runtime</strong><span>Machines and browser instances run the actual site access in a managed Linux x86_64 environment.</span></div>
+          <div class="feature"><strong>Unified Entries</strong><span>Cloud browsers, SaaS sites, inner sites, and workspaces become controlled access points.</span></div>
+          <div class="feature"><strong>Central Authorization</strong><span>Users, roles, groups, and permissions define who can use each resource and feature.</span></div>
+          <div class="feature"><strong>Session Isolation</strong><span>Workspaces keep accounts, browser profiles, and site environments stable and separated.</span></div>
+          <div class="feature"><strong>Protected Sharing</strong><span>Collaboration links provide limited, expirable, password-protected access without exposing credentials.</span></div>
+          <div class="feature"><strong>Data Protection</strong><span>URL protection, watermarks, copy controls, and sensitive content rules reduce leakage risk.</span></div>
+          <div class="feature"><strong>Audit Replay</strong><span>Recording and replay turn key browser operations into evidence for audits and troubleshooting.</span></div>
+          <div class="feature"><strong>MCP Integration</strong><span>Codex, Claude Code, Cursor, and other AI clients can operate browsers within authorized scopes.</span></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="topics-title">
+        <div class="section-heading">
+          <h2 id="topics-title">Covered Topics</h2>
+          <p>The guide covers the full path from first deployment to advanced access governance for real Sa2web usage scenarios.</p>
+        </div>
+        <div class="features">
+          <div class="feature"><strong>Install and Deploy</strong><span>Docker, license, machines, browsers, certificates.</span></div>
+          <div class="feature"><strong>Cloud Browser</strong><span>Controlled remote browser environments for employees.</span></div>
+          <div class="feature"><strong>SaaS Access</strong><span>Unified site entries without handing out raw account secrets.</span></div>
+          <div class="feature"><strong>Workspaces</strong><span>Stable browser profiles for accounts, stores, customers, and regions.</span></div>
+          <div class="feature"><strong>Inner Sites</strong><span>Access internal systems through managed browser entries.</span></div>
+          <div class="feature"><strong>Permissions</strong><span>Users, admins, roles, groups, and resource authorization.</span></div>
+          <div class="feature"><strong>Audit and Protection</strong><span>URL protection, watermarking, copy controls, recording, and replay.</span></div>
+          <div class="feature"><strong>MCP and AI Agents</strong><span>Let Codex, Claude Code, Cursor, and other clients use controlled browser access.</span></div>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="read-title">
+        <h2 class="visually-hidden" id="read-title">Choose a language</h2>
+        <div class="language-band">
+          <article class="language-card">
+            <div>
+              <h3>English Version</h3>
+              <p>A practical English guide for Sa2web deployment, enterprise browser access governance, SaaS access, workspaces, audits, and MCP workflows.</p>
+            </div>
+            <a href="en/" aria-label="Open English Sa2web guide">Open English Book &rarr;</a>
+          </article>
+          <article class="language-card">
+            <div>
+              <h3>简体中文版</h3>
+              <p>从 Sa2web 是什么开始，按中文界面和中文读者习惯组织部署、配置、协作、安全和故障排查流程。</p>
+            </div>
+            <a href="zh/" aria-label="Open Chinese Sa2web guide">进入中文版 &rarr;</a>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        This site is generated from a Quarto Book project. Source entry files:
+        <a href="en/">English book</a> and <a href="zh/">Chinese book</a>.
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+# Enable Cloud Browsing
+
+## Goal
+
+Complete the basic **machine -> browser instance -> user Cloud Browser** flow so users can open a remote browser from the Sa2web frontend.
+
+Each frontend user has an independent remote browser profile. If user A visits and logs in to a site through Cloud Browser, user B will not inherit user A's login state when visiting the same site. Their cookies, sessions, and browser data remain isolated.
+
+## Add a Machine
+
+Go to:
+
+```text
+Browser Management > Machine Management
+```
+
+Click **Add Machine** and fill in:
+
+| Field | Recommendation |
+|---|---|
+| IP address | The private IP of the current Sa2web deployment server |
+| Port | Default `7000` |
+
+After saving, return to the machine list and confirm that the machine status is normal, as shown in @fig-add-machine.
+
+![Sa2web add machine](/images/add-machine.png){#fig-add-machine}
+
+## Add a Browser
+
+Go to:
+
+```text
+Browser Management > Browser List
+```
+
+Click **Add Navigator**, as shown in @fig-add-browser, and fill in:
+
+| Field | Recommendation |
+|---|---|
+| Machine | Select the machine you just added |
+| Browser version | Use the built-in browser version |
+| Browser ID | Enter an easy-to-recognize ID, such as `chrome100` |
+
+Choose the network mode based on your scenario:
+
+| Mode | Description |
+|---|---|
+| Host Network | Uses the server's local network. HTTP/SOCKS5 proxies can be configured. Suitable for general access scenarios |
+| Isolated Network | Creates an independent network environment for this browser. DNS, UDP, WebRTC, and other traffic are taken over. Suitable for scenarios with stronger network isolation requirements |
+
+If you choose **Isolated Network**, configure the network proxy in the current browser configuration. Proxies configured elsewhere in the system do not apply to this isolated network.
+
+After saving, click to start the browser. When the status becomes `Running`, the browser instance can be scheduled, as shown in @fig-browser-status.
+
+![Sa2web add browser](/images/add-browser.png){#fig-add-browser}
+
+![Sa2web browser status](/images/browser-status.png){#fig-browser-status}
+
+## Configure the Browser
+
+In the browser list, click the "![](/images/wrench.png){width=20px}" button to open the browser configuration page.
+
+Common settings include:
+
+- Kernel version.
+- Operating system.
+- Browser brand.
+- Browser version.
+- Mobile phone model.
+- Time zone.
+- Language.
+
+![Sa2web browser configuration](/images/browser-config.png){#fig-browser-config}
+
+For more complete configuration details, see the browser instance configuration section in @sec-sites-inner-sites-config, "Site and Inner Site Configuration".
+
+## Create and Authorize a Group
+
+Go to:
+
+```text
+Group Management
+```
+
+Add a new group, such as `demo`, as shown in @fig-group-management. Then open the user configuration for the group and add the test user to it. During the first test, you may only have the `system` user, so add it to the group and save, as shown in @fig-group-users.
+
+![Sa2web group management](/images/group-management.png){#fig-group-management}
+
+![Sa2web group users](/images/group-users.png){#fig-group-users}
+
+Next, open **Privileges** and select the features required by the `demo` group. For minimum validation, select at least **Cloud Browser** and save, as shown in @fig-group-privileges.
+
+If you used an isolated network earlier, also go to:
+
+```text
+Cloud Browser Isolated Networks
+```
+
+Select the browser you just created, such as `chrome100`, and save, as shown in @fig-group-privileges-isolated.
+
+![Sa2web group privileges](/images/group-privileges.png){#fig-group-privileges}
+
+![Sa2web isolated network authorization](/images/group-privileges-isolated.png){#fig-group-privileges-isolated}
+
+## Verify the User Frontend
+
+Open the user frontend:
+
+```text
+https://<APP_DOMAIN>/
+```
+
+You can also open the login page directly:
+
+```text
+https://<APP_DOMAIN>/app/login
+```
+
+Log in as an authorized user. After entering the frontend, you will see a search and URL input box near the top center of the page, with proxy and network selectors nearby.
+
+If you configured an isolated network, first choose the authorized browser in the network dropdown, such as `chrome100`. Then enter a keyword or URL in the input box:
+
+```text
+demo
+https://www.sa2web.com
+```
+
+If a new tab opens and web browsing works normally, Cloud Browser is available, as shown in @fig-cloud-browser.
+
+![Sa2web Cloud Browser](/images/cloud-browser.png){#fig-cloud-browser}
+
+## Acceptance Checklist
+
+- [ ] The machine has been added with port `7000`.
+- [ ] The browser has been added and is in `Running` state.
+- [ ] The user has been added to the correct group.
+- [ ] The group has been authorized for **Cloud Browser**.
+- [ ] If using an isolated network, the group has been authorized for the corresponding browser.
+- [ ] The user frontend can open Cloud Browser.
+- [ ] The remote browser can access the test page.

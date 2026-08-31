@@ -1,0 +1,140 @@
+# 开启云浏览
+
+## 目标
+
+完成最基本的 **机器 → 浏览器实例 → 用户云浏览** 流程，让用户可以通过 Sa2web 前端打开远程浏览器。
+
+每个前端用户都有独立的远程浏览器配置文件。用户 A 通过云浏览访问站点并登录后，用户 B 再访问同一站点时不会继承用户 A 的登录状态，两人的 Cookie、Session 和浏览器数据互不影响。
+
+## 添加机器
+
+进入：
+
+```text
+浏览器管理 > 机器管理
+```
+
+点击 **Add Machine**，填写：
+
+| 字段 | 建议 |
+|---|---|
+| IP 地址 | 当前 Sa2web 部署服务器的内网 IP |
+| 端口 | 默认 `7000` |
+
+保存后回到机器列表，确认机器状态正常,如 @fig-add-machine 所示。
+
+![Sa2web 添加机器](/images/add-machine.png){#fig-add-machine}
+
+## 添加浏览器
+
+进入：
+
+```text
+浏览器管理 > Browser List
+```
+
+点击 **Add Navigator**，如 @fig-add-browser 所示，填写：
+
+| 字段 | 建议 |
+|---|---|
+| 机器 | 选择刚才添加的机器 |
+| 浏览器版本 | 使用内置浏览器版本 |
+| 浏览器 ID | 输入一个容易识别的 ID，例如 `chrome100` |
+
+网络模式按场景选择：
+
+| 模式 | 说明 |
+|---|---|
+| Host Network | 使用服务器本机网络，可配置 HTTP / SOCKS5 代理，适合一般访问场景 |
+| Isolated Network | 为该浏览器创建独立网络环境，DNS、UDP、WebRTC 等流量都会被接管，适合对网络隔离要求更高的场景 |
+
+如果选择 **Isolated Network**，需要在当前浏览器配置中填写网络代理；系统其他位置设置的代理不会对该隔离网络生效。
+
+保存后点击启动浏览器。状态变为 `Running` 后，说明该浏览器实例可以被调度,如 @fig-browser-status 所示。
+
+![Sa2web 添加浏览器](/images/add-browser.png){#fig-add-browser}
+
+![Sa2web 浏览器状态](/images/browser-status.png){#fig-browser-status}
+
+## 配置浏览器
+
+在浏览器列表中点击“![](/images/wrench.png){width=20px}”按钮，打开浏览器配置页。
+
+常用配置包括：
+
+- 内核版本；
+- 操作系统；
+- 浏览器品牌；
+- 浏览器版本；
+- 手机型号；
+- 时区；
+- 语言。
+
+![Sa2web 浏览器配置](/images/browser-config.png){#fig-browser-config}
+
+更完整的配置说明见 @sec-sites-inner-sites-config “站点与内部站点配置”中的浏览器实例配置部分。
+
+## 创建分组并授权
+
+进入：
+
+```text
+Group management
+```
+
+添加一个新组，例如 `demo` ,如 @fig-group-management 所示。然后进入该分组的用户配置，将测试用户加入分组。首次测试时通常只有 `system` 用户，可以先把它加入该组并保存，如 @fig-group-users 所示。
+
+![Sa2web 分组管理](/images/group-management.png){#fig-group-management}
+
+![Sa2web 分组用户](/images/group-users.png){#fig-group-users}
+
+继续进入 **Privileges**，为 `demo` 分组勾选所需功能。最小验证至少需要勾选 **Cloud Browser** 并保存, 如 @fig-group-privileges 所示。
+
+如果前面使用了隔离网络，还需要进入：
+
+```text
+Cloud Browser Isolated Networks
+```
+
+选中刚才创建的浏览器，例如 `chrome100`，并保存，如 @fig-group-privileges-isolated 所示。
+
+![Sa2web 分组授权](/images/group-privileges.png){#fig-group-privileges}
+
+![Sa2web 分组授权隔离网络](/images/group-privileges-isolated.png){#fig-group-privileges-isolated}
+
+## 验证用户前端
+
+打开用户前端：
+
+```text
+https://<APP_DOMAIN>/
+```
+
+也可以直接打开登录页：
+
+```text
+https://<APP_DOMAIN>/app/login
+```
+
+使用已授权用户登录。进入前端后，在页面顶部中间可以看到搜索和网址输入框，旁边可以选择代理和网络。
+
+如果配置了隔离网络，先在网络下拉框里选择刚才授权的浏览器，例如 `chrome100`。然后在输入框中输入关键词或 URL：
+
+```text
+demo
+https://www.sa2web.com
+```
+
+如果能打开新标签页并正常浏览网页，就说明云浏览已经可用,如 @fig-cloud-browser 所示。
+
+![Sa2web 云浏览](/images/cloud-browser.png){#fig-cloud-browser}
+
+## 验收
+
+- [ ] 机器已添加，端口为 `7000`；
+- [ ] 浏览器已添加并处于 `Running` 状态；
+- [ ] 用户已加入正确分组；
+- [ ] 分组已授权 **Cloud Browser**；
+- [ ] 如使用隔离网络，分组已授权对应浏览器；
+- [ ] 用户前端可以打开云浏览器；
+- [ ] 远程浏览器可以访问测试网页。

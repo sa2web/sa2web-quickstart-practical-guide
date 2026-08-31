@@ -1,0 +1,313 @@
+# Installation and Deployment
+
+## Goal
+
+Prepare Docker and Docker Compose on a Linux x86_64 server, download the Sa2web installation package, complete the first installation, and finish the minimum usable configuration: register a license, add a machine, add a browser, authorize a group, and finally open Cloud Browser from the normal user frontend.
+
+Sa2web's basic official requirements are: 1 CPU core or more, 4 GB of memory recommended (2 GB minimum), Linux x86_64, and the ability to run Docker commands.
+
+This guide uses **Ubuntu 24.04 LTS x86_64** as the example.
+
+## Prepare an Ubuntu Server
+
+Recommended minimum preparation:
+
+| Item | Recommendation |
+|---|---|
+| Operating system | Ubuntu 24.04 LTS x86_64 |
+| CPU | 2 cores or more is better for testing and real use |
+| Memory | 4 GB or more |
+| Permissions | root or sudo |
+| Network | The server can reach Docker image sources, and clients can reach the server |
+| Domain name | For public deployment, prepare a domain name resolved to the server's public IP |
+
+Before installation, confirm the server addresses:
+
+| Address | Purpose | Example |
+|---|---|---|
+| Private IP | Communication between Sa2web services and keeper/browser components | `192.168.1.111` |
+| Public IP | External user access entry | `203.0.113.10` |
+| Domain name | Production HTTPS certificate and access address | `browser.example.com` |
+
+::: {.callout-warning}
+Sa2web currently requires Linux x86_64 for server deployment. Windows, macOS, and ARM64 are not part of the current officially supported deployment environment.
+:::
+
+::: {.callout-tip}
+If you are only testing on a LAN, you can temporarily use the private IP for both the public IP and domain fields. The access address will look like `https://192.168.1.105/`. If the browser address bar warns that the certificate is not secure, see @sec-safe-cert.
+:::
+
+## Install Docker and Docker Compose
+
+Docker currently recommends installing Docker Engine through the apt repository.
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+Add the repository:
+
+```bash
+sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<EOF2
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF2
+
+sudo apt update
+```
+
+Install:
+
+```bash
+sudo apt install -y \
+  docker-ce docker-ce-cli containerd.io \
+  docker-buildx-plugin docker-compose-plugin
+```
+
+Verify:
+
+```bash
+docker --version
+docker compose version
+sudo docker ps
+```
+
+For a non-root user, add the current user to the `docker` group:
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+Log in to the terminal again, then run:
+
+```bash
+docker ps
+```
+
+## Download the Sa2web Installation Package
+
+Open the Sa2web website:
+
+```text
+https://www.sa2web.com
+```
+
+Click the **Download** menu at the top to open the download page, then choose the version you need, such as Team Edition or Enterprise Edition.
+
+If you are not logged in, you will be asked to create an account or log in before downloading. If you do not have an account yet, register a new one:
+
+1. Enter your email address.
+2. Enter the password you want to use.
+3. Enter the password again for confirmation.
+4. Click to get the verification code.
+5. Check your email and enter the code.
+6. Agree to the terms.
+7. Click to create the account.
+
+After the account is created, return to the download page and click the target version again. The browser will download the installation package.
+
+::: {.callout-note}
+The package name changes by version. This guide uses `browser_team_x.y.z.tar.gz` or `browser_full_x.y.z.tar.gz` to represent the actual downloaded file name.
+:::
+
+## Upload and Extract the Package
+
+Upload the package from your local computer to the server. You can use `scp`, a server control panel, a bastion host, an SFTP tool, or your cloud provider console.
+
+Example:
+
+```bash
+scp browser_team_x.y.z.tar.gz root@192.168.1.105:/opt/
+```
+
+Log in to the server, enter the upload directory, and extract the package:
+
+```bash
+ssh root@192.168.1.105
+
+cd /opt
+tar -xzf browser_team_x.y.z.tar.gz
+cd browser_team_x.y.z
+```
+
+If you downloaded the Full version, replace the file and directory names with the actual names:
+
+```bash
+tar -xzf browser_full_x.y.z.tar.gz
+cd browser_full_x.y.z
+```
+
+## Run the Installation Script
+
+After entering the extracted directory, run the installer:
+
+```bash
+# Create the installation directory
+mkdir -p /opt/sa
+sudo chown -R $USER:$USER /opt/sa
+
+# Run the installation script
+chmod +x install.sh
+sh install.sh
+```
+
+The installer asks for deployment parameters one by one. Fill out the following table in advance and enter the values during installation.
+
+| Prompt | Recommendation |
+|---|---|
+| Installation directory | Use the default if possible. If you customize it, use a dedicated directory and make sure the current user has enough permissions. |
+| Server private IP | Enter the server's private address, such as `192.168.1.105` |
+| Server public IP | For public deployment, enter the public IP. For LAN deployment, enter the same private IP |
+| Domain name | Use your domain if you have one. Otherwise use the public IP or private IP |
+| System name | The system name displayed on browser pages, such as `Sa2web Demo` |
+| `system` user password | Set a strong password. Pressing Enter directly uses the default password `abc123456` |
+| Certificate generation option | Choose `1` to request a certificate for a public domain automatically, `2` for a self-signed certificate, or `3` to use your own certificate |
+
+Certificate options by scenario:
+
+| Option | Scenario |
+|---|---|
+| `1` | The server is deployed on the public internet, the domain already resolves to this server, and you want to obtain a free HTTPS certificate automatically |
+| `2` | LAN testing, no domain name, or temporary IP-based access |
+| `3` | Your organization already has certificates and needs to use its own certificate files |
+
+::: {.callout-note}
+When choosing option `2` for LAN deployment, see @sec-free-cert and @sec-safe-cert if you do not want the browser address bar to show a security warning.
+:::
+
+If the script continues to ask uncertain advanced questions, press Enter to use the defaults for the first test. The script loads offline images, generates `docker-compose.yml`, writes configuration, and starts containers.
+
+::: {.callout-warning}
+Do not keep the default password `abc123456` in production. Even if you pressed Enter during installation for a quick test, change the `system` password immediately after the first login and create a backup administrator.
+:::
+
+For public deployment, also open these ports in your network settings:
+
+| Port | Purpose |
+|---|---|
+| 443(tcp), 80(tcp) | Default ports for HTTP(S) access |
+| 3478(tcp,udp) | Required for WebRTC communication. Open additional UDP ports such as 49160-49200 as needed |
+
+## First Visit to Sa2web
+
+After installation, open the deployment address in a browser:
+
+```text
+https://<APP_DOMAIN>/
+```
+
+Examples:
+
+```text
+https://192.168.1.105/
+https://browser.example.com/
+```
+
+The admin console login address is usually:
+
+```text
+https://<APP_DOMAIN>/admin/login
+```
+
+Log in with the `system` user and password configured during installation. Enter the verification code as prompted on the page, as shown in @fig-admin-login.
+
+![Sa2web admin console login](/images/admin-login.png){#fig-admin-login}
+
+## Register the License
+
+After logging in to the admin console, open the license registration dialog, as shown in @fig-register-license.
+
+![Sa2web license registration](/images/register-license.png){#fig-register-license}
+
+Then return to the Sa2web website:
+
+```text
+https://www.sa2web.com
+```
+
+Open the **My** page and get a free license from the account center. Copy the `license` and `key` from the page into the license registration dialog in the admin console and save, as shown in @fig-get-license.
+
+![Get a license from the Sa2web website](/images/get-license.png){#fig-get-license}
+
+::: {.callout-note}
+A free license is usually suitable for learning, validation, and small-scale trials. Some advanced capabilities may appear in the UI but may not take effect depending on the license type.
+:::
+
+## Service Status and Logs
+
+View container status:
+
+```bash
+docker compose -f <installation-directory>/docker-compose.yml ps
+```
+
+View application logs:
+
+```bash
+tail -n 200 <installation-directory>/logs/app/app.log
+```
+
+Or view Docker Compose logs:
+
+```bash
+docker compose -f <installation-directory>/docker-compose.yml logs --tail 200 --follow
+```
+
+## Local Browser and SSL Certificates
+
+### Sa2web Deployed Publicly with Your Own Domain {#sec-free-cert}
+
+1. At your domain provider, such as Cloudflare, point the domain DNS record to the IP address of the server where Sa2web is deployed.
+2. Open ports 80 and 443 in the network settings of the Sa2web server.
+3. When users first visit `https://<domain>/`, Sa2web's Caddy service automatically requests a trusted certificate from Let's Encrypt. The user browser will no longer show an insecure certificate warning.
+
+### Sa2web Deployed on a LAN with a Caddy Self-Signed Certificate {#sec-safe-cert}
+
+1. First obtain the certificate. You can get `root.crt` from `$INSTALL_PATH/data/caddy/pki/authorities/local/root.crt` and send it to users for installation. Alternatively, users can click the lower-left pop-up menu, click **My Devices**, then click **Download Certificate**, as shown in @fig-down-cert.
+
+![Sa2web download root certificate](/images/down-cert.png){#fig-down-cert}
+
+2. After downloading the certificate, install it into the trusted root certificate store, as shown in @fig-install-root-cert.
+
+![Sa2web install root certificate](/images/install-root-cert.png){#fig-install-root-cert}
+
+3. After installing the certificate, quit the browser and reopen it. When you visit again, the browser no longer shows an insecure certificate warning, as shown in @fig-safe-cert.
+
+![Sa2web trusted certificate](/images/safe-cert.png){#fig-safe-cert}
+
+Common checkpoints:
+
+| Problem | What to check |
+|---|---|
+| Page cannot be opened | Security group, firewall, DNS resolution, and certificate mode |
+| Login fails | `system` password and verification code |
+| Machine is offline | Machine IP, port `7000`, and container status |
+| Browser cannot start | Docker Compose logs and machine status |
+| Isolated network unavailable | Browser proxy configuration and whether the group is authorized for that isolated network |
+
+## Acceptance Checklist
+
+- [ ] Docker works.
+- [ ] `docker compose` works.
+- [ ] The Sa2web installer completed successfully.
+- [ ] The deployment address `https://<APP_DOMAIN>/` is accessible.
+- [ ] `/admin/login` is accessible.
+- [ ] The `system` user can log in to the admin console.
+- [ ] The license is registered.
+- [ ] The default password has been changed.
+
+References:
+
+- https://www.sa2web.com/docs/en/install/prerequisites
+- https://www.sa2web.com/docs/en/install/deploy
+- https://docs.docker.com/engine/install/ubuntu/

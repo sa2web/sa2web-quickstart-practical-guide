@@ -1,0 +1,136 @@
+# 定制站点 {#sec-site-customization}
+
+## 目标
+
+使用站点高级配置中的脚本,或者站点插件下的脚本，可以将站点里的页面、以及数据和接口，进行隐藏、删除和改写。
+
+## 1. 站点高级配置
+
+进入：
+
+```text
+站点管理 > 站点列表 > 配置
+```
+
+有关于脚本的配置和术语包括：
+
+| 配置 | 用途 |
+|---|---|
+| 请求头 / 响应头 | 供脚本读取指定 Header |
+| 页面脚本 | 选中`Page Script`，则是针对页面内容进行操作，如DOM、表单、按钮、跳转、页面增强 |
+| SSE 脚本 | 选中`SSE script` 则脚本是用于改写服务端事件流 |
+| 普通接口拦截 | 当上面两项都未选中，则脚本是用于普通接口改写，改写非 SSE 接口响应 body |
+
+## 2. 脚本与插件
+
+操作路径：
+
+1. 在站点列表点击“管理插件”；
+2. 创建插件；
+3. 填写名称、版本、备注和关联站点；
+4. 上传插件或进入配置；
+5. 新增脚本；
+6. 设置匹配 URL、脚本类型、selector 和内容；
+7. 用测试账号验证。
+
+脚本也可用于账号类型、工作空间 和内部站点。
+
+## 3. 页面敏感内容控制
+
+适合：
+
+- 隐藏价格；
+- 隐藏客户隐私字段；
+- 移除不允许员工操作的按钮和区域；
+- 针对某些 URL 隐藏页面区域。
+- 改写某个页面区域
+
+目标站点改版后 selector 可能失效，需要回归测试。
+
+
+## 页面脚本工具
+
+目前网页上编写脚本不方便测试，可以去github上下载官方提供的脚本编辑器，项目地址为https://github.com/sa2web/sa2web-script-editor。
+
+
+下载后解压安装文件，然后点击`sa2web.exe`就可以启动脚本编辑器，如 @fig-sa2web-script-editor 所示。
+
+![Sa2web 脚本编辑器](/images/sa2web-script-editor.png){#fig-sa2web-script-editor}
+
+
+以下将以两个示例来演示功能。
+
+## 示例1：将官网顶部导航栏背景变成珊瑚色
+
+1、URL栏输入`https://www.sa2web.com`;
+
+2、选中`Page script`，表示该脚本是操作页面内容的脚本;
+
+3、`CSS/XPath selector`中，输入`*`,表示当页面出现匹配的元素时，将会执行下面的脚本;
+
+4、脚本框中输入以下JavaScript代码，如 @fig-script-background 所示：
+```JavaScript
+// Please write your code here...
+//Execute the event listener function when the header element appears on the page.
+api.dom.addConnectListener("header",()=>{
+      //Find the header element on the page
+      const header=api.dom.querySelector(document,"header")
+      //Change the background color of the header element to lightcoral
+      header.style.backgroundColor='lightcoral';
+});
+```
+
+![Sa2web 改变背景色脚本](/images/script-background.png){#fig-script-background}
+
+点击`Run Script` 按钮来测试脚本，将打开左边的网站然后执行脚本，如 @fig-script-editor-run-script 所示：
+
+![Sa2web 测试脚本结果](/images/script-editor-run-script.png){#fig-script-editor-run-script}
+
+达到预期后，将上面的内容复制到页面上，如 @fig-edit-script-on-page 所示：
+
+![Sa2web 填写到站点高级配置页面上](/images/edit-script-on-page.png){#fig-edit-script-on-page}
+
+点击`Add`按钮，然后再点击`Save Config`按钮后，用户登录前面访问该站点，导航栏将变为珊瑚色,如 @fig-official-change-background 所示。
+
+![Sa2web 前端访问结果](/images/official-change-background.png){#fig-official-change-background}
+
+## 示例2：在官网中间显示访问次数
+
+这个示例主要用api.user里的api用于显示存取数据功能，且是永久存储在数据库里。现在这个示例用于官网站点页面计数显示，如 @fig-script-add-page-count 所示：
+```JavaScript
+api.dom.addConnectListener('body',async (con)=>{
+    if(window!=window.top) return;
+    if(window.isCounted){
+     return;
+    }
+    window.isCounted=true;
+    //Count page views by current site only
+    await api.user.incr('counter',1,true,false,false);
+    //Get page views by current site only
+    const ret=await api.user.get('counter',true,false,false);
+    document.body.insertAdjacentHTML('beforeend',`<div style='position: fixed;background-color:red;color:white;left:50%;top:50%;width:100px;height:100px;line-height:100px;text-align:center;font-size:50px'>
+    ${ret.value}</div>`)
+})
+```
+![Sa2web 添加统计访问次数脚本](/images/script-add-page-count.png){#fig-script-add-page-count}
+
+点击添加和点击保存1分钟后，在Sa2web前端访问该站点，将会在页面中间显示红框，红框里显示页面访问次数，每访问或者刷新一次都会增加1次，如 @fig-script-page-count 所示。
+
+![Sa2web 页面统计效果](/images/script-page-count.png){#fig-script-page-count}
+
+
+当然api.user下的api远不止这些，还可以按账号，按设备存取数据。具体的API 请参考 @sec-script-api 。
+
+以上2个示例，只是演示了定制目标站点的一些最基本的功能，你也可通过其它API，如api.http下的api与企业系统深度集成,以提供更好的体验。
+
+## 4. `window.api`
+
+页面脚本和普通接口拦截脚本可以使用：
+
+```ts
+window.api
+```
+
+主要包含 `user`、`dom`、`utils` 、`config` 和 `header()`相关的api。
+
+完整接口见 @sec-script-api。

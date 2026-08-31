@@ -1,0 +1,94 @@
+# 开启水印
+
+## 目标
+
+为远程访问增加可追溯水印策略。
+
+## 适合场景
+
+- 外包人员；
+- 客服访问客户资料；
+- 远程办公；
+- BYOD；
+- 内部敏感后台；
+- 高风险业务页面。
+
+## 水印内容建议
+
+建议能够定位访问者和访问时间，例如：
+
+```text
+用户名 / 员工号
+访问时间
+企业名称
+访问环境标识
+```
+
+不要把新的敏感信息写进水印本身。
+
+## 推荐组合
+
+```text
+用户 / 分组权限
+      +
+页面敏感内容控制
+      +
+水印
+      +
+录制与回放
+```
+
+水印的价值主要是提高截图传播成本和增加事后可追溯性，不应描述成绝对“防截图”。
+
+## 开启加水印
+
+进入：
+
+```text
+站点管理 > 站点列表
+站点管理 > 内部站点列表
+```
+
+找到目标站点或者内部站点并点击"![](/images/site-config.png){width=22px}"按钮，进入站点/内部站点配置页面：
+
+1. 启用"明水印"和"暗水印"；
+2. 保存；
+3. 用测试账号重新访问；
+4. 验证用户前端访问站点后是不是显示水印。
+
+用户在前端打开该站点，可以看到页面加水印的效果， 如 @fig-watermark 所示。
+
+![Sa2web 水印](/images/site-with-watermark.png){#fig-watermark}
+
+如果你用的是免费版，则不支持水印功能。
+
+**云浏览加水印**
+
+对于云浏览器访问的站点，要加水印，要在分组管理中启用“云浏览器加水印”开关。
+
+进入：
+```text
+分组管理 > 分组列表
+```
+
+点击"Privileges"按钮，进入组权限设置页面，如 @fig-group-privileges-3 所示，勾选“明水印”和“暗水印”，保存.
+
+![Sa2web 分组权限设置](/images/group-privileges-2.png){#fig-group-privileges-3}
+
+用户打开Sa2web前端，访问该站点，将会看到上站点显示的水印内容，如 @fig-cloud-browser-watermark 所示。
+
+![Sa2web 云浏览器加水印](/images/cloud-browser-watermark.png){#fig-cloud-browser-watermark}
+
+## 控制水印内容
+
+进入：
+```text
+设置 > 系统设置
+```
+打开系统设置页面，修改水印文本，如 @fig-system-settings-watermark  所示：
+
+![Sa2web 系统设置水印](/images/system-settings-watermark.png){#fig-system-settings-watermark}
+
+## 验收
+ - [ ] 用户前端访问站点后显示水印；
+ - [ ] 云浏览器访问站点后显示水印；

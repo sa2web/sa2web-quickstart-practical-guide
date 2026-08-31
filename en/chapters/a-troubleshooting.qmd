@@ -1,0 +1,35 @@
+# FAQ and Troubleshooting
+
+## Admin Console Cannot Open
+
+```bash
+docker compose ps
+docker compose logs --tail 200
+```
+
+Check the domain, ports 80/443, certificates, and application logs.
+
+## Users Cannot See SaaS Sites
+
+Check in order: site status -> user group -> SaaS site authorization -> account type.
+
+## Users Cannot See Workspaces
+
+Check workspace authorization in the group.
+
+## Inner Site Cannot Open
+
+1. First confirm that the target URL is reachable from the network where the Sa2web Browser node is located, then check DNS, routes, firewall, and ACL.
+2. Check inner site authorization in the group.
+
+## MCP Cannot Connect
+
+Check Node.js, `@sa2web/mcp`, Playwright, `SA2_LOGIN_URL`, clientId/clientSecret, Agent permissions, and HTTPS.
+
+## Passkey Fails
+
+Check the target domain, HTTPS trust, browser origin, Passkey binding state, and target-site compatibility first.
+
+Official documentation:
+
+- https://www.sa2web.com/docs/en/operations/troubleshooting

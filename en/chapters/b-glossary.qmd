@@ -1,0 +1,18 @@
+# Glossary
+
+| Term | Meaning |
+|---|---|
+| Browser Runtime | Browser runtime environment that executes page JavaScript, cookies, sessions, and network requests |
+| Machine | Node that hosts the remote browser runtime environment |
+| Browser | Sa2web browser instance |
+| SaaS Site | External business site accessed from the user frontend |
+| Inner Site | Entry point to an internal enterprise business system |
+| Workspace | Business entry that fixes a site account, browser environment, and configuration |
+| Group | Authorization unit that combines users, sites, workspaces, permissions, and networks in batches |
+| Collaboration Link | Controlled access link for collaboration or temporary users |
+| Encrypted URL | Capability that hides the origin address shown in the user frontend |
+| Replay | Recording and replay of remote browsing access |
+| MCP | Model Context Protocol |
+| `@sa2web/mcp` | Sa2web MCP / CLI npm package |
+| `sa2` | Sa2web recommended remote browser CLI |
+| Passkey | Passwordless authentication method based on standards such as WebAuthn |

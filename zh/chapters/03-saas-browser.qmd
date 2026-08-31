@@ -1,0 +1,89 @@
+# 开启 SaaS 浏览
+
+## 目标
+
+把固定业务网站配置成 SaaS 站点，让员工从 Sa2web 用户前端直接进入，并复用管理员预先登录好的远程浏览器账号。
+
+SaaS 浏览适合多人共用同一业务账号的场景。管理员先在后台为某个站点完成登录，获得授权的前端用户再访问该站点时，会直接处于已登录状态。
+
+## 创建站点分类
+
+进入：
+
+```text
+站点管理 > 站点分类管理
+```
+
+可以按业务创建分类，例如外贸平台、客服系统、数据分析、常用系统等，如 @fig-site-category 所示。
+
+![Sa2web 站点分类管理](/images/site-category.png){#fig-site-category}
+
+## 添加 SaaS 站点
+
+进入：
+
+```text
+站点管理 > 站点列表
+```
+
+添加站点时，如 @fig-add-site 所示，需要填写：
+
+- 站点名称；
+- 完整 `https://` URL；
+- 分类；
+- Logo；
+- 简介；
+- 状态；
+- 账号分类。
+
+![Sa2web 添加 SaaS 站点](/images/add-site.png){#fig-add-site}
+
+添加完成后，就可以在站点列表里显示，如 @fig-site-list 所示。
+
+![Sa2web 站点列表](/images/site-list.png){#fig-site-list}
+
+## 创建账号类型和浏览器账号
+
+进入：
+
+```text
+站点管理 > 站点浏览器账号
+```
+
+为目标站点创建浏览器账号。保存后，在列表中点击“![](/images/login.png){width=20px}”按钮，让远程浏览器打开目标站点并完成登录，如 @fig-site-browser-account 所示。
+
+![Sa2web 站点浏览器账号登录](/images/site-browser-account.png){#fig-site-browser-account}
+
+## 分组授权
+
+在分组中授权以下资源：
+
+- 用户；
+- SaaS 站点；
+
+在分组中选择 SaaS 站点，如 @fig-group-privileges-site 所示。
+
+![Sa2web 分组授权 SaaS 站点](/images/group-privileges-site.png){#fig-group-privileges-site}
+
+## 用户访问
+
+用户登录：
+
+```text
+https://<APP_DOMAIN>/app/login
+```
+
+在用户首页，如 @fig-user-access-saas 所示，点击已授权站点，即可进入远程浏览器访问 SaaS 站点，如 @fig-user-access-saas-site 所示。
+
+![Sa2web 用户中心](/images/user-access-saas.png){#fig-user-access-saas}
+
+![Sa2web 用户访问 SaaS 站点](/images/user-access-saas-site.png){#fig-user-access-saas-site}
+
+由于管理员已经在后台完成登录，用户访问该 SaaS 站点时会直接进入已登录状态。账号名称会按配置自动隐藏，避免前端用户看到共享账号信息。
+
+## 验收
+
+- [ ] 用户前端能看到已授权站点；
+- [ ] 未授权用户看不到该站点；
+- [ ] 点击站点后能进入远程浏览器；
+- [ ] 对应浏览器账号保持登录状态。

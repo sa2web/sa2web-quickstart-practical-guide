@@ -1,0 +1,18 @@
+# 常用术语
+
+| 术语 | 含义 |
+|---|---|
+| Browser Runtime | 执行网页 JavaScript、Cookie、Session 和网络请求的浏览器运行环境 |
+| Machine | 承载远程浏览器运行环境的节点 |
+| Browser | Sa2web 浏览器实例 |
+| SaaS Site | 用户前端访问的外部业务站点 |
+| Inner Site | 企业内部业务系统入口 |
+| Workspace | 固定站点账号、Browser 环境和配置的业务入口 |
+| Group | 批量组合用户、站点、Workspace、权限和网络的授权单元 |
+| Collaboration Link | 协作或临时用户的受控访问链接 |
+| Encrypted URL | 隐藏用户前端展示源站地址的能力 |
+| Replay | 远程浏览访问的录制与回放 |
+| MCP | Model Context Protocol |
+| `@sa2web/mcp` | Sa2web MCP / CLI npm 包 |
+| `sa2` | Sa2web 推荐远程浏览器 CLI |
+| Passkey | 基于 WebAuthn 等标准的无密码认证方式 |

@@ -1,0 +1,89 @@
+# Enable SaaS Browsing
+
+## Goal
+
+Configure a fixed business website as a SaaS site so employees can enter it directly from the Sa2web user frontend and reuse a remote browser account that an administrator has already logged in to.
+
+SaaS browsing is suitable when multiple people share the same business account. The administrator logs in to a site in the backend first. Authorized frontend users then access the site in an already logged-in state.
+
+## Create a Site Category
+
+Go to:
+
+```text
+Site Management > Site Category Management
+```
+
+Create categories by business area, such as foreign trade platforms, customer service systems, data analytics, and common systems, as shown in @fig-site-category.
+
+![Sa2web site category management](/images/site-category.png){#fig-site-category}
+
+## Add a SaaS Site
+
+Go to:
+
+```text
+Site Management > Site List
+```
+
+When adding a site, as shown in @fig-add-site, fill in:
+
+- Site name.
+- Full `https://` URL.
+- Category.
+- Logo.
+- Description.
+- Status.
+- Account category.
+
+![Sa2web add SaaS site](/images/add-site.png){#fig-add-site}
+
+After the site is added, it appears in the site list, as shown in @fig-site-list.
+
+![Sa2web site list](/images/site-list.png){#fig-site-list}
+
+## Create an Account Type and Browser Account
+
+Go to:
+
+```text
+Site Management > Site Browser Account
+```
+
+Create a browser account for the target site. After saving, click the "![](/images/login.png){width=20px}" button in the list so the remote browser opens the target site and completes login, as shown in @fig-site-browser-account.
+
+![Sa2web site browser account login](/images/site-browser-account.png){#fig-site-browser-account}
+
+## Group Authorization
+
+Authorize the following resources in the group:
+
+- Users.
+- SaaS sites.
+
+Select the SaaS site in the group, as shown in @fig-group-privileges-site.
+
+![Sa2web group authorization for SaaS sites](/images/group-privileges-site.png){#fig-group-privileges-site}
+
+## User Access
+
+Users log in at:
+
+```text
+https://<APP_DOMAIN>/app/login
+```
+
+On the user home page, as shown in @fig-user-access-saas, click the authorized site to enter the remote browser and access the SaaS site, as shown in @fig-user-access-saas-site.
+
+![Sa2web user center](/images/user-access-saas.png){#fig-user-access-saas}
+
+![Sa2web user access to a SaaS site](/images/user-access-saas-site.png){#fig-user-access-saas-site}
+
+Because the administrator has already completed login in the backend, users enter the SaaS site in a logged-in state. The account name is automatically hidden according to configuration so frontend users do not see shared account information.
+
+## Acceptance Checklist
+
+- [ ] The user frontend can show the authorized site.
+- [ ] Unauthorized users cannot see the site.
+- [ ] Clicking the site opens the remote browser.
+- [ ] The corresponding browser account remains logged in.

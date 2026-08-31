@@ -1,0 +1,77 @@
+# Enable Inner Site Access
+
+## Goal
+
+Let employees access ERP, CRM, order systems, or internal admin consoles through Sa2web.
+
+Each frontend user has an independent remote browser profile for inner sites. If user A accesses and logs in to an inner site, user B will not inherit user A's login state when accessing the same inner site. Their browser data remains isolated.
+
+## Confirm Network Reachability
+
+The inner site URL must be reachable from the deployment environment or browser node.
+
+Sa2web does not replace underlying network connectivity. The browser node still needs the required routing, intranet tunneling, DNS, firewall, and ACL conditions to access the internal system.
+
+## Add an Inner Site
+
+Go to:
+
+```text
+Site Management > Inner Site List
+```
+
+Open the Sa2web inner site list, as shown in @fig-inner-site-list.
+
+![Sa2web inner site list](/images/inner-site-list.png){#fig-inner-site-list}
+
+Click **Add Site** to open the add inner site dialog, as shown in @fig-add-inner-site-dialog.
+
+![Sa2web add inner site](/images/add-inner-site-dialog.png){#fig-add-inner-site-dialog}
+
+Fill in:
+
+- Name.
+- URL.
+- Description.
+- Logo.
+
+## Group Authorization
+
+Authorize the inner site to business users in a group.
+
+Go to:
+
+```text
+Group Management > Inner Sites
+```
+
+Open the inner site authorization page, as shown in @fig-inner-site-group.
+
+![Sa2web inner site authorization](/images/inner-site-group.png){#fig-inner-site-group}
+
+Select the inner sites that need authorization, then click **Save**.
+
+After authorization, users can click **Enter** in the **Internal Systems** area of the frontend, as shown in @fig-inner-site-access.
+
+![Sa2web inner site access](/images/inner-site-access.png){#fig-inner-site-access}
+
+## Typical Remote Work Path
+
+```text
+Employee normal browser
+   ->
+Sa2web
+   ->
+Enterprise-side browser runtime
+   ->
+ERP / CRM / internal backend
+```
+
+With this path, employee devices do not need to connect directly to inner sites, and internal system addresses do not need to be exposed.
+
+## Acceptance Checklist
+
+- [ ] The browser node can access the internal URL.
+- [ ] Authorized users can see the inner site.
+- [ ] Unauthorized users cannot see it.
+- [ ] External devices do not need direct connectivity to the inner site.

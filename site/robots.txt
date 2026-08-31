@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://quickstart.sa2web.com/sitemap.xml
