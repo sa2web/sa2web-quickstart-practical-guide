@@ -4,7 +4,11 @@
 
 Complete the basic **machine -> browser instance -> user Cloud Browser** flow so users can open a remote browser from the Sa2web frontend.
 
-Each frontend user has an independent remote browser profile. If user A visits and logs in to a site through Cloud Browser, user B will not inherit user A's login state when visiting the same site. Their cookies, sessions, and browser data remain isolated.
+Cloud Browsing creates separate remote browser profiles for each access environment based on the user, proxy, and isolated network.
+
+For example, after User A accesses and logs in to a website through Cloud Browsing, User B will not inherit User A’s login state when accessing the same website. Their cookies, sessions, and other browser data remain isolated from each other.
+
+Likewise, even for the same user, if User A accesses the same website through Proxy A and Proxy B, the two access environments will use separate browser profiles. Their cookies, sessions, and other browser data remain isolated and are not shared between the two environments.
 
 ## Add a Machine
 
@@ -48,7 +52,7 @@ Choose the network mode based on your scenario:
 | Host Network | Uses the server's local network. HTTP/SOCKS5 proxies can be configured. Suitable for general access scenarios |
 | Isolated Network | Creates an independent network environment for this browser. DNS, UDP, WebRTC, and other traffic are taken over. Suitable for scenarios with stronger network isolation requirements |
 
-If you choose **Isolated Network**, configure the network proxy in the current browser configuration. Proxies configured elsewhere in the system do not apply to this isolated network.
+If you choose **Isolated Network**, you need to configure a network proxy for the current browser. Proxies configured elsewhere in the system, such as site-level proxies, will be chained on top of this network proxy.
 
 After saving, click to start the browser. When the status becomes `Running`, the browser instance can be scheduled, as shown in @fig-browser-status.
 

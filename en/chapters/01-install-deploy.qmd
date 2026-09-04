@@ -152,10 +152,6 @@ cd browser_full_x.y.z
 After entering the extracted directory, run the installer:
 
 ```bash
-# Create the installation directory
-mkdir -p /opt/sa
-sudo chown -R $USER:$USER /opt/sa
-
 # Run the installation script
 chmod +x install.sh
 sh install.sh
@@ -165,7 +161,7 @@ The installer asks for deployment parameters one by one. Fill out the following 
 
 | Prompt | Recommendation |
 |---|---|
-| Installation directory | Use the default if possible. If you customize it, use a dedicated directory and make sure the current user has enough permissions. |
+| Installation directory | Use the default if possible. If you customize it, use a dedicated directory and make sure the current user has enough permissions or have sudo privileges. |
 | Server private IP | Enter the server's private address, such as `192.168.1.105` |
 | Server public IP | For public deployment, enter the public IP. For LAN deployment, enter the same private IP |
 | Domain name | Use your domain if you have one. Otherwise use the public IP or private IP |

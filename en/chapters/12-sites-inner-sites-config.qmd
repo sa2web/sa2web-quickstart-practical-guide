@@ -129,7 +129,7 @@ You can also configure:
 | Proxy username | Filled in when the proxy requires authentication |
 | Proxy password | Filled in when the proxy requires authentication |
 
-Inner sites usually do not need public internet proxies; they depend more on route reachability from the browser node to the intranet system. External SaaS sites may need a fixed proxy if they require a specific egress IP. Note, however, that when the running browser instance uses an isolated network, the proxy configured here does not take effect because the proxy is already specified in the isolated network.
+Inner sites usually do not need public internet proxies; they depend more on route reachability from the browser node to the intranet system. External SaaS sites may need a fixed proxy if they require a specific egress IP. 
 
 ## Time Zone Settings
 
