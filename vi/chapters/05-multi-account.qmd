@@ -1,0 +1,78 @@
+# Bật Đa tài khoản (Multi-Workspace Browsing)
+
+## Mục tiêu
+
+Sử dụng không gian làm việc (workspace) để quản lý tài khoản kinh doanh cố định, môi trường trình duyệt cố định và truy cập cộng tác đa user.
+
+Khi cùng một trang cần nhiều tài khoản hoặc danh tính, hãy tạo nhiều không gian làm việc cho trang đó. Khi user frontend vào các không gian làm việc khác nhau, họ thực tế đang dùng môi trường trình duyệt từ xa và tài khoản khác nhau.
+
+## Kế hoạch Không gian làm việc
+
+Bạn có thể chia không gian làm việc theo khu vực, dòng nghiệp vụ, cửa hàng hoặc khách hàng, ví dụ:
+
+```text
+Thương mại điện tử Mỹ A
+Thương mại điện tử Mỹ B
+Thương mại điện tử EU C
+```
+
+Điều này cho phép các không gian làm việc khác nhau đăng nhập cùng một trang với tài khoản khác nhau và tránh xung đột tài khoản.
+
+## Tạo Không gian làm việc
+
+Điều kiện tiên quyết: trang đã được tạo và bạn có quyền **Quản lý không gian làm việc**.
+
+Đi đến:
+
+```text
+Quản lý không gian làm việc > Danh sách không gian làm việc
+```
+
+Danh sách không gian làm việc hiển thị, như hình @fig-workspace-list.
+
+![Sa2web workspace list](/images/workspace-list.png){#fig-workspace-list}
+
+Sau khi chọn trang, nhấn nút "![](/images/add-workspace.png){width=40px}" để mở hộp thoại thêm không gian làm việc, như hình @fig-add-workspace-dialog.
+
+![Sa2web add workspace](/images/add-workspace-dialog.png){#fig-add-workspace-dialog}
+
+Nhập tên không gian làm việc, chọn thể hiện trình duyệt và lưu.
+
+Sau khi lưu, nhấn nút "![](/images/login.png){width=20px}" để vào trang đăng nhập và truy cập của không gian làm việc đó, sau đó đăng nhập trang mục tiêu, như hình @fig-workspace-list2.
+
+![Sa2web workspace list after adding workspace](/images/workspace-list2.png){#fig-workspace-list2}
+
+## Cấp quyền Nhóm
+
+Cấp quyền không gian làm việc cho user kinh doanh trong nhóm.
+
+Đi đến:
+
+```text
+Quản lý nhóm > Không gian làm việc
+```
+
+Điều này mở trang cấp quyền không gian làm việc, như hình @fig-workspace-group.
+
+![Sa2web workspace authorization](/images/workspace-group.png){#fig-workspace-group}
+
+Nếu bạn chọn **Chọn tất cả không gian làm việc** ở góc trên bên phải của một trang, cả không gian làm việc hiện có và tương lai dưới trang đó đều được cấp quyền cho nhóm hiện tại. Nếu bạn chỉ muốn công khai một số không gian làm việc, hãy chọn riêng lẻ.
+
+Khi user vào trang chủ Sa2web, các không gian làm việc xuất hiện, như hình @fig-workspace-access. Mở rộng trang và nhấn **Truy cập** để mở không gian làm việc tương ứng.
+
+![Sa2web workspace access](/images/workspace-access.png){#fig-workspace-access}
+
+## Cô lập Mạng
+
+Khi các tài khoản khác nhau cần môi trường mạng khác nhau, hãy kết hợp:
+
+- Proxy Cloud Browser.
+- Mạng cô lập Cloud Browser.
+- Thể hiện trình duyệt và cấu hình khác nhau.
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Mỗi không gian làm việc ánh xạ đúng tài khoản.
+- [ ] User chỉ thấy không gian làm việc được cấp quyền.
+- [ ] Cấu hình trình duyệt và mạng khớp kỳ vọng.
+- [ ] Trạng thái đăng nhập có thể dùng liên tục.

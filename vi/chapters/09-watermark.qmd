@@ -1,0 +1,98 @@
+# Bật Watermark (Dấu vết nước)
+
+## Mục tiêu
+
+Thêm chính sách watermark có thể truy vết vào truy cập từ xa.
+
+## Tình huống Phù hợp
+
+- Nhà thầu.
+- Hỗ trợ khách hàng truy cập dữ liệu khách hàng.
+- Làm việc từ xa.
+- BYOD (Mang thiết bị cá nhân).
+- Backend nội bộ nhạy cảm.
+- Trang kinh doanh rủi ro cao.
+
+## Khuyến nghị Nội dung Watermark
+
+Dùng nội dung có thể xác định người truy cập và thời gian truy cập, ví dụ:
+
+```text
+Tên user / ID nhân viên
+Thời gian truy cập
+Tên công ty
+Định danh môi trường truy cập
+```
+
+Đừng đưa thông tin nhạy cảm mới vào chính watermark.
+
+## Kết hợp Khuyến nghị
+
+```text
+Quyền user / nhóm
+      +
+Kiểm soát nội dung nhạy cảm trang
+      +
+Watermark
+      +
+Ghi âm và phát lại
+```
+
+Giá trị của watermark là tăng chi phí phân phối ảnh chụp màn hình và cải thiện truy vết sau sự việc. Không nên mô tả chúng là ngăn chặn ảnh chụp màn hình tuyệt đối.
+
+## Bật Watermark Trang
+
+Đi đến:
+
+```text
+Quản lý trang > Danh sách trang
+Quản lý trang > Danh sách trang nội bộ
+```
+
+Tìm trang hoặc trang nội bộ mục tiêu và nhấn nút "![](/images/site-config.png){width=22px}" để vào trang cấu hình trang hoặc trang nội bộ:
+
+1. Bật **Watermark Hiển thị (Visible Watermark)** và **Watermark Ẩn (Invisible Watermark)**.
+2. Lưu.
+3. Truy cập lại với tài khoản test.
+4. Xác minh frontend user hiển thị watermark sau khi truy cập trang.
+
+Khi user mở trang từ frontend, họ có thể thấy trang có watermark, như hình @fig-watermark.
+
+![Sa2web watermark](/images/site-with-watermark.png){#fig-watermark}
+
+Phiên bản miễn phí không hỗ trợ watermark.
+
+## Watermark Cloud Browser
+
+Để thêm watermark cho trang được truy cập qua Cloud Browser, bật công tắc **Cloud Browser Watermark** trong quản lý nhóm.
+
+Đi đến:
+
+```text
+Quản lý nhóm > Danh sách nhóm
+```
+
+Nhấn **Quyền hạn** để mở trang cài đặt quyền nhóm, như hình @fig-group-privileges-3. Chọn **Watermark Hiển thị** và **Watermark Ẩn**, sau đó lưu.
+
+![Sa2web group privilege settings](/images/group-privileges-2.png){#fig-group-privileges-3}
+
+Khi user mở frontend Sa2web và truy cập trang, trang hiển thị nội dung watermark, như hình @fig-cloud-browser-watermark.
+
+![Sa2web Cloud Browser watermark](/images/cloud-browser-watermark.png){#fig-cloud-browser-watermark}
+
+## Kiểm soát Nội dung Watermark
+
+Đi đến:
+
+```text
+Cài đặt > Cài đặt hệ thống
+```
+
+Mở trang cài đặt hệ thống và sửa văn bản watermark, như hình @fig-system-settings-watermark.
+
+![Sa2web system watermark settings](/images/system-settings-watermark.png){#fig-system-settings-watermark}
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Watermark hiển thị sau khi frontend user truy cập trang.
+- [ ] Watermark hiển thị sau khi Cloud Browser truy cập trang.

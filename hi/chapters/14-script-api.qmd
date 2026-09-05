@@ -1,0 +1,729 @@
+# स्क्रिप्ट API का उपयोग करें {#sec-script-api}
+
+## लक्ष्य
+
+Sa2web पेज स्क्रिप्ट और मानक इंटरफ़ेस इंटरसेप्शन स्क्रिप्ट के लिए उपलब्ध `window.api` क्षमताओं का वर्णन करें, ताकि साइट कॉन्फ़िगरेशन, आंतरिक साइट कॉन्फ़िगरेशन, अकाउंट कॉन्फ़िगरेशन, और प्लगइन स्क्रिप्ट में स्क्रिप्ट अधिक विश्वसनीयता से लिखी जा सकें।
+
+स्क्रिप्ट API में पांच मुख्य श्रेणियां हैं:
+
+| API | उद्देश्य |
+|---|---|
+| `api.config` | कस्टम कॉन्फ़िगरेशन पढ़ता है; वर्तमान में केवल सहयोग लिंक के तहत मान्य |
+| `api.http` | पेज CORS प्रतिबंधों को बायपास करते हुए HTTP अनुरोध भेजता है |
+| `api.user` | उपयोगकर्ता, साइट, अकाउंट, या डिवाइस द्वारा स्कोप्ड डेटा पढ़ता और लिखता है |
+| `api.dom` | DOM क्वेरी करता है, दृश्यता जांचता है, तत्व परिवर्तनों को सुनता है, और ओवरले बनाता है |
+| `api.utils` | शर्तों की प्रतीक्षा करता है और पेज में जावास्क्रिप्ट चलाता है |
+| `api.header()` | रिकॉर्ड किए गए अनुरोध या प्रतिक्रिया हेडर पढ़ता है |
+
+पेज स्क्रिप्ट और मानक इंटरफ़ेस इंटरसेप्शन स्क्रिप्ट `window.api` का उपयोग कर सकती हैं। SSE स्क्रिप्ट केवल गारंटी देती हैं कि `data` पास किया गया है और आमतौर पर `window.api` पर निर्भर नहीं करती हैं।
+
+## समग्र संरचना
+
+स्क्रिप्ट में, आप `api` को सीधे उपयोग कर सकते हैं या `window.api` के माध्यम से एक्सेस कर सकते हैं:
+
+```ts
+interface Window {
+  api: {
+    user: UserApi;
+    config: Record<string, unknown>;
+    http: HttpApi;
+    dom: DomApi;
+    utils: UtilsApi;
+    header(headerName: string, isRequestHeader: boolean): Promise<string | string[] | undefined>;
+  };
+}
+```
+
+उदाहरण:
+
+```js
+const apiBase = api.config.apiBase;
+const userToken = await api.user.get('token');
+const submit = api.dom.querySelector(document, 'button[type="submit"]');
+const profile = await api.http.ajax({ url: `http://192.168.1.111:8080/profile` });
+```
+
+::: {.callout-tip}
+स्क्रिप्ट में Sa2web के `api.dom` क्वेरी टूल को प्राथमिकता दें। वे CSS सेलेक्टर और XPath सेलेक्टर दोनों का समर्थन करते हैं, जो उन्हें अकेले `document.querySelector()` की तुलना में जटिल व्यावसायिक पेज के लिए अधिक उपयुक्त बनाते हैं।
+:::
+
+## `api.config`
+
+`api.config` साइट स्क्रिप्ट वातावरण से कस्टम कॉन्फ़िगरेशन पढ़ता है।
+
+```ts
+config: Record<string, unknown>
+```
+
+उदाहरण:
+
+```js
+const apiBase = api.config.apiBase;
+const featureEnabled = api.config.featureEnabled === true;
+```
+
+## `api.http`
+
+`api.http` उपयोगकर्ता स्क्रिप्ट के लिए HTTP अनुरोध टूल प्रदान करता है। `api.http.ajax` ब्राउज़र मुख्य प्रक्रिया में वास्तविक अनुरोध निष्पादित करता है, इसलिए यह पेज की CORS नीति से प्रतिबंधित नहीं है।
+
+### `api.http.ajax(options)`
+
+एक HTTP अनुरोध भेजता है।
+
+```ts
+ajax(options: {
+  url: string;
+  method?: string;
+  data?: any;
+  headers?: Record<string, string>;
+  timeout?: number;
+  dataType?: 'json' | 'text' | 'html' | 'arrayBuffer';
+  contentType?: string;
+  processData?: boolean;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data?: any;
+  error?: string;
+  timeout?: boolean;
+}>
+```
+
+पैरामीटर्स:
+
+| विकल्प | प्रकार | डिफ़ॉल्ट | विवरण |
+|---|---|---|---|
+| `url` | `string` | - | अनुरोध URL। |
+| `method` | `string` | `GET` | HTTP विधि। |
+| `data` | `any` | - | अनुरोध डेटा। `GET` और `HEAD` अनुरोध क्वेरी स्ट्रिंग में सीरियलाइज़ होते हैं; अन्य विधियाँ इसे अनुरोध बॉडी में लिखती हैं। |
+| `headers` | `Record<string, string>` | `{}` | अनुरोध हेडर। |
+| `timeout` | `number` | - | मिलीसेकंड में टाइमआउट। केवल `0` से अधिक होने पर प्रभावी होता है। |
+| `dataType` | `'json' \| 'text' \| 'html' \| 'arrayBuffer'` | `json` | प्रतिक्रिया पार्सिंग मोड। |
+| `contentType` | `string` | `application/x-www-form-urlencoded; charset=UTF-8` | अनुरोध बॉडी Content-Type। |
+| `processData` | `boolean` | `true` | क्या `data` को स्वचालित रूप से सीरियलाइज़ करना है। `false` पर सेट होने पर, `data` को सीधे अनुरोध बॉडी के रूप में पास किया जाता है। |
+
+रिटर्न मान:
+
+| फ़ील्ड | प्रकार | विवरण |
+|---|---|---|
+| `ok` | `boolean` | HTTP 2xx प्रतिक्रियाओं के लिए `true`; पार्स त्रुटियों, HTTP त्रुटियों, टाइमआउट, अबॉर्ट, या नेटवर्क त्रुटियों के लिए `false`। |
+| `status` | `number` | HTTP स्टेटस कोड। `0` का अर्थ है टाइमआउट, अबॉर्ट, या नेटवर्क-लेयर विफलता। |
+| `statusText` | `string` | HTTP स्टेटस टेक्स्ट। गैर-HTTP विफलताओं के लिए, यह `timeout`, `abort`, या `error` है। |
+| `data` | `any` | पार्स किया गया प्रतिक्रिया डेटा। |
+| `error` | `string` | पार्स विफलताओं या गैर-HTTP विफलताओं के लिए त्रुटि संदेश। |
+| `timeout` | `boolean` | कॉन्फ़िगर किए गए टाइमआउट के कारण अनुरोध अबॉर्ट होने पर `true`। |
+
+GET अनुरोध उदाहरण:
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/profile',
+  method: 'GET',
+  dataType: 'json',
+  timeout: 10000
+});
+
+if (ret.ok) {
+  console.log(ret.data);
+}
+```
+
+POST अनुरोध उदाहरण:
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/items',
+  method: 'POST',
+  contentType: 'application/json',
+  data: { name: 'demo' }
+});
+
+if (!ret.ok) {
+  console.warn(ret.status, ret.error || ret.statusText);
+}
+```
+
+## `api.user`
+
+`api.user` स्क्रिप्ट निष्पादन के दौरान उपयोगकर्ता-संबंधित डेटा पढ़ता और लिखता है। यह विभिन्न आयामों में स्टोरेज स्कोप को अलग कर सकता है।
+
+सामान्य पैरामीटर्स:
+
+| पैरामीटर | प्रकार | डिफ़ॉल्ट | विवरण |
+|---|---|---|---|
+| `site` | `boolean` | `false` | क्या साइट द्वारा अलग करना है |
+| `account` | `boolean` | `false` | क्या साइट अकाउंट या वर्कस्पेस नाम द्वारा अलग करना है |
+| `did` | `boolean` | `false` | क्या डिवाइस द्वारा अलग करना है |
+
+आयाम अनुशंसाएँ:
+
+| परिदृश्य | अनुशंसा |
+|---|---|
+| साइट्स पर एक ही उपयोगकर्ता के लिए डेटा साझा करें | `site=false` |
+| प्रत्येक साइट के लिए स्वतंत्र रूप से डेटा स्टोर करें | `site=true` |
+| एक ही साइट के तहत अलग-अलग अकाउंट अलग करें | `account=true` |
+| एक ही उपयोगकर्ता को विभिन्न डिवाइस पर अलग करें | `did=true` |
+
+### `api.user.put()`
+
+एक कुंजी-मान जोड़ी सहेजता है।
+
+```ts
+put(
+  name: string,
+  value: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+उदाहरण:
+
+```js
+await api.user.put('token', 'abc123');
+await api.user.put('draft:lastOrderId', 'A-1001', true, true);
+```
+
+### `api.user.get()`
+
+एक निर्दिष्ट कुंजी पढ़ता है।
+
+```ts
+get(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ value: string | null, status: boolean }>
+```
+
+उदाहरण:
+
+```js
+const ret = await api.user.get('token');
+if (ret.status && ret.value) {
+  console.log(ret.value);
+}
+```
+
+### `api.user.remove()`
+
+एक निर्दिष्ट कुंजी हटाता है।
+
+```ts
+remove(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+उदाहरण:
+
+```js
+await api.user.remove('token');
+await api.user.remove('draft:lastOrderId', true, true);
+```
+
+### `api.user.incr()`
+
+एक निर्दिष्ट कुंजी के संख्यात्मक मान को एक चरण से बढ़ाता है। यदि कुंजी मौजूद नहीं है, तो यह बनाई जाती है।
+
+```ts
+incr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+उदाहरण:
+
+```js
+const ret = await api.user.incr('submitCount', 1, true);
+console.log(ret.value);
+```
+
+### `api.user.decr()`
+
+एक निर्दिष्ट कुंजी के संख्यात्मक मान को एक चरण से घटाता है। यदि कुंजी मौजूद नहीं है, तो यह प्रारंभिक नकारात्मक मान के साथ बनाई जाती है।
+
+```ts
+decr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+उदाहरण:
+
+```js
+const ret = await api.user.decr('remainingQuota', 1, true, true);
+console.log(ret.value);
+```
+
+### `api.user.startsWith()`
+
+कुंजी-नाम उपसर्ग द्वारा डेटा ढूंढता है।
+
+```ts
+startsWith(
+  prefix: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<Array<{ name: string, value: string }>>
+```
+
+उदाहरण:
+
+```js
+const items = await api.user.startsWith('cache:', true);
+for (const item of items) {
+  console.log(item.name, item.value);
+}
+```
+
+### `api.user.countAll()`
+
+एक निर्दिष्ट कुंजी नाम के लिए रिकॉर्ड गिनता है।
+
+```ts
+countAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+उदाहरण:
+
+```js
+const ret = await api.user.countAll('token', true);
+console.log(ret.value);
+```
+
+### `api.user.sumAll()`
+
+एक निर्दिष्ट कुंजी नाम के लिए मानों का संख्यात्मक योग गणना करता है।
+
+```ts
+sumAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+उदाहरण:
+
+```js
+const ret = await api.user.sumAll('score', true);
+console.log(ret.value);
+```
+
+## `api.dom`
+
+`api.dom` DOM क्वेरी, दृश्यता जांच, कनेक्शन लिस्टनर, रीसाइज़ लिस्टनर, और ओवरले निर्माण प्रदान करता है।
+
+सेलेक्टर समर्थन:
+
+| सिंटैक्स | विवरण |
+|---|---|
+| `.button.primary` | CSS सेलेक्टर |
+| `xpath://div[@id="app"]` | XPath सेलेक्टर |
+| `.dialog:p` | मिलान तत्व का पैरेंट तत्व लौटाता है |
+| `.dialog:p2` | मिलान तत्व से दो स्तर ऊपर का पूर्वज लौटाता है |
+| `.header:bottom` | ओवरले बाउंड्री विधियों में तत्व की निचली बाउंड्री का उपयोग करता है |
+| `.sidebar:right` | ओवरले बाउंड्री विधियों में तत्व की दाईं बाउंड्री का उपयोग करता है |
+
+@sec-matchSelector भी देखें।
+
+### `api.dom.createMutationObserver()`
+
+एक `MutationObserver` बनाता है और कैश करता है। यदि उसी बाइंडिंग नाम वाला ऑब्जर्वर लक्ष्य तत्व पर पहले से मौजूद है, तो मौजूदा ऑब्जर्वर सीधे लौटाया जाता है।
+
+```ts
+createMutationObserver(
+  ele: Element,
+  bindStr: string,
+  childList: boolean,
+  subtree: boolean,
+  attributes: boolean,
+  characterData: boolean,
+  fn: (mutations: MutationRecord[]) => void
+): MutationObserver
+```
+
+उदाहरण:
+
+```js
+api.dom.createMutationObserver(
+  document.body,
+  '__bodyObserver__',
+  true,
+  true,
+  false,
+  false,
+  (mutations) => console.log(mutations)
+);
+```
+
+### `api.dom.querySelector()`
+
+पहला मिलान तत्व क्वेरी करता है।
+
+```ts
+querySelector(doc: Document, cssOrXPathSelector: string): HTMLElement | null
+```
+
+उदाहरण:
+
+```js
+const el = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+```
+
+### `api.dom.querySelectorAll()`
+
+सभी मिलान तत्व क्वेरी करता है।
+
+```ts
+querySelectorAll(doc: Document, cssOrXPathSelector: string): HTMLElement[]
+```
+
+उदाहरण:
+
+```js
+const buttons = api.dom.querySelectorAll(document, 'button.primary');
+buttons.forEach((button) => console.log(button.textContent));
+```
+
+### `api.dom.isVisible()`
+
+जांचता है कि कोई तत्व दृश्यमान प्रतिच्छेदन क्षेत्र में है या नहीं।
+
+```ts
+isVisible(ele: HTMLElement): Promise<boolean>
+```
+
+उदाहरण:
+
+```js
+const el = api.dom.querySelector(document, '.submit');
+if (el && await api.dom.isVisible(el)) {
+  console.log('visible');
+}
+```
+
+### `api.dom.getVisibleRect()`
+
+तत्व का वर्तमान दृश्यमान आयत प्राप्त करता है।
+
+```ts
+getVisibleRect(ele: HTMLElement): Promise<DOMRectReadOnly>
+```
+
+उदाहरण:
+
+```js
+const el = api.dom.querySelector(document, '.panel');
+if (el) {
+  const rect = await api.dom.getVisibleRect(el);
+  console.log(rect.left, rect.top, rect.width, rect.height);
+}
+```
+
+### `api.dom.getConnectListeners()`
+
+वर्तमान कनेक्शन लिस्टनर सूची प्राप्त करता है।
+
+```ts
+getConnectListeners(): Array<{
+  querySelector: string;
+  callback: (isConnected: boolean) => void;
+  isConnected?: boolean;
+}>
+```
+
+उदाहरण:
+
+```js
+api.dom.addConnectListener('.modal', () => {});
+console.log(api.dom.getConnectListeners());
+```
+
+### `api.dom.addConnectListener()`
+
+किसी तत्व के डॉक्यूमेंट में प्रकट होने या गायब होने को सुनता है।
+
+```ts
+addConnectListener(
+  cssOrXPathSelector: string,
+  callback: (isConnected: boolean) => void
+): void
+```
+
+उदाहरण:
+
+```js
+api.dom.addConnectListener('.dialog', (isConnected) => {
+  console.log('dialog:', isConnected);
+});
+```
+
+### `api.dom.removeConnectListener()`
+
+निर्दिष्ट सेलेक्टर्स के लिए कनेक्शन लिस्टनर हटाता है।
+
+```ts
+removeConnectListener(cssOrXPathSelectors: string[]): void
+```
+
+उदाहरण:
+
+```js
+api.dom.removeConnectListener(['.dialog', '.toast']);
+```
+
+### `api.dom.addResizeListener()`
+
+लक्ष्य तत्व के आकार और स्थिति में परिवर्तन सुनता है। यदि तत्व मौजूद नहीं है, तो कॉलबैक एक खाली आयत प्राप्त करता है।
+
+```ts
+addResizeListener(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  callback: (rect: DOMRect) => void,
+  createObserver?: boolean,
+  delayTime?: number
+): ResizeObserver | (() => void)
+```
+
+उदाहरण:
+
+```js
+api.dom.addResizeListener('.target', '__targetResize__', (rect) => {
+  console.log(rect.width, rect.height);
+});
+```
+
+### `api.dom.createOverlayBy()`
+
+एक फिक्स्ड-पोजीशन ओवरले बनाता है जो लक्ष्य तत्व के दृश्यमान क्षेत्र का अनुसरण करता है।
+
+```ts
+createOverlayBy(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  createObserver?: boolean,
+  delayTime?: number,
+  fn?: (rect: DOMRectReadOnly) => void
+): HTMLElement
+```
+
+उदाहरण:
+
+```js
+const overlay = api.dom.createOverlayBy('.target', '__overlay__');
+overlay.style.border = '2px solid #f00';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+### `api.dom.createOverlayByBorder()`
+
+ऊपर, दाएं, नीचे, और बाएं बाउंड्री से फिक्स्ड-पोजीशन ओवरले बनाता है। बाउंड्री मान पिक्सेल नंबर या सेलेक्टर हो सकते हैं।
+
+```ts
+createOverlayByBorder(
+  bindWindowStr: string,
+  top: string | number,
+  right: string | number,
+  bottom: string | number,
+  left: string | number,
+  createObserver?: boolean,
+  delayTime?: number
+): HTMLElement
+```
+
+उदाहरण:
+
+```js
+const panel = api.dom.createOverlayByBorder(
+  '__centerPanel__',
+  'header:bottom',
+  20,
+  'footer:top',
+  '.sidebar:right'
+);
+panel.style.background = 'rgba(0,0,0,.08)';
+```
+
+## `api.utils`
+
+`api.utils` पेज शर्तों की प्रतीक्षा करने और पेज संदर्भ में कोड निष्पादित करने के लिए सामान्य सहायक क्षमताएं प्रदान करता है।
+
+### `api.utils.wait()`
+
+शर्त फ़ंक्शन truthy मान लौटाने तक पोल करता है। टाइमआउट पर त्रुटि फेंकता है।
+
+```ts
+wait(
+  fn: () => boolean,
+  timeoutMs: number,
+  intervalMs?: number
+): Promise<void>
+```
+
+उदाहरण:
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.ready'),
+  10000,
+  200
+);
+```
+
+### `api.utils.runScript()`
+
+वर्तमान पेज में जावास्क्रिप्ट कोड चलाता है और परिणाम लौटाता है।
+
+```ts
+runScript(
+  code: string,
+  callback?: (result: any, error: Error) => void
+): Promise<any>
+```
+
+उदाहरण:
+
+```js
+const title = await api.utils.runScript('document.title');
+console.log(title);
+```
+
+कॉलबैक फॉर्म:
+
+```js
+await api.utils.runScript('document.body.innerText.slice(0, 100)', (result, error) => {
+  if (error) {
+    console.error(error);
+    return;
+  }
+  console.log(result);
+});
+```
+
+## `api.header()`
+
+`api.header(headerName, isRequestHeader)` रिमोट ब्राउज़र द्वारा रिकॉर्ड किए गए अनुरोध या प्रतिक्रिया हेडर पढ़ता है।
+
+```ts
+header(
+  headerName: string,
+  isRequestHeader: boolean
+): Promise<string | string[] | undefined>
+```
+
+पैरामीटर्स:
+
+| पैरामीटर | प्रकार | विवरण |
+|---|---|---|
+| `headerName` | `string` | अनुरोध या प्रतिक्रिया हेडर नाम। पढ़ते समय लोअरकेस में बदला जाता है |
+| `isRequestHeader` | `boolean` | `true` अनुरोध हेडर पढ़ता है; `false` प्रतिक्रिया हेडर पढ़ता है |
+
+उदाहरण:
+
+```js
+const cookie = await api.header('cookie', true);
+const setCookie = await api.header('set-cookie', false);
+```
+
+नोट्स:
+
+- केवल साइट कॉन्फ़िगरेशन में जोड़े गए अनुरोध या प्रतिक्रिया हेडर ही रिकॉर्ड किए जाते हैं।
+- अनुरोध हेडर रिमोट ब्राउज़र द्वारा भेजे गए अनुरोधों से आते हैं।
+- प्रतिक्रिया हेडर रिमोट ब्राउज़र द्वारा प्राप्त प्रतिक्रियाओं से आते हैं।
+- प्रतिक्रिया हेडर एक स्ट्रिंग सरणी लौटा सकते हैं।
+
+## सामान्य स्क्रिप्ट संयोजन
+
+### एक तत्व की प्रतीक्षा करें और उसे क्लिक करें
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.login-button'),
+  10000,
+  200
+);
+
+const button = api.dom.querySelector(document, '.login-button');
+button?.click();
+```
+
+### XPath के साथ अंग्रेजी बटन ढूंढें
+
+```js
+const submit = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+
+if (submit && await api.dom.isVisible(submit)) {
+  submit.click();
+}
+```
+
+### पेज स्थिति सहेजें
+
+```js
+const count = await api.user.incr('visitCount', 1, true, true);
+await api.user.put('lastTitle', document.title, true, true);
+
+console.log(count.value);
+```
+
+### रुचि के क्षेत्र में ओवरले जोड़ें
+
+```js
+const overlay = api.dom.createOverlayBy('.customer-phone', '__phoneMask__');
+overlay.style.background = '#fff';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+## उपयोग सिद्धांत
+
+स्क्रिप्ट को व्यावसायिक कोड की तरह प्रबंधित करें:
+
+- मिलान URL सीमित करें ताकि स्क्रिप्ट असंबंधित पेज पर न चले।
+- रोलबैक और समस्या निवारण के लिए स्क्रिप्ट को स्पष्ट नाम दें।
+- पहले टेस्ट साइट या टेस्ट अकाउंट पर सत्यापित करें।
+- DOM सेलेक्टर पर निर्भर स्क्रिप्ट का रिग्रेशन-परीक्षण करें।
+- स्टोर किए गए डेटा के लिए स्पष्ट उपसर्ग उपयोग करें, जैसे `cache:`, `draft:`, `state:`।
+- स्क्रिप्ट में रहस्य, लंबे समय तक रहने वाले टोकन, या अकाउंट पासवर्ड हार्ड-कोड न करें।
+- स्क्रिप्ट परिवर्तनों का कारण रिकॉर्ड करें और आवश्यकता पड़ने पर कोड समीक्षा करें।
+
+## समस्या निवारण चेकलिस्ट
+
+| समस्या | क्या जांचें |
+|---|---|
+| `api` मौजूद नहीं है | पुष्टि करें कि स्क्रिप्ट प्रकार `window.api` का समर्थन करता है या नहीं; SSE स्क्रिप्ट को इस पर निर्भर नहीं करना चाहिए |
+| तत्व नहीं मिला | जांचें कि URL मेल खाता है या नहीं, पेज लोडिंग समाप्त हो गई है या नहीं, और सेलेक्टर बदल गया है या नहीं |
+| XPath काम नहीं करता | पुष्टि करें कि `xpath://` उपसर्ग उपयोग किया गया है |
+| हेडर नहीं पढ़ा जा सकता | पहले साइट कॉन्फ़िगरेशन में संबंधित अनुरोध या प्रतिक्रिया हेडर नाम जोड़ें |
+| उपयोगकर्ता डेटा स्कोप में मिश्रित होता है | `site`, `account`, और `did` आयाम पैरामीटर्स जांचें |
+| ओवरले स्थिति असामान्य है | जांचें कि लक्ष्य तत्व दृश्यमान है या नहीं और बाउंड्री सेलेक्टर सही हैं या नहीं |
+| स्क्रिप्ट अन्य पेज को प्रभावित करती है | मिलान URL संकीर्ण करें या स्क्रिप्ट की शुरुआत में पेज-शर्त जांच जोड़ें |

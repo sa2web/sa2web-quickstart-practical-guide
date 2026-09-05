@@ -1,0 +1,132 @@
+# 사이트 커스터마이징 {#sec-site-customization}
+
+## 목표
+
+고급 사이트 구성에서 스크립트를 사용하거나 사이트 플러그인 하의 스크립트를 사용하여 사이트 내의 페이지, 데이터, 인터페이스를 숨기고, 제거하고, 다시 씁니다.
+
+## 1. 고급 사이트 구성
+
+다음을 수행합니다:
+
+```text
+사이트 관리 > 사이트 목록 > 구성
+```
+
+스크립트 관련 구성 및 용어 포함:
+
+| 구성 | 목적 |
+|---|---|
+| 요청 헤더 / 응답 헤더 | 스크립트가 지정된 헤더 읽도록 허용 |
+| 페이지 스크립트 | 스크립트가 페이지 콘텐츠(DOM, 폼, 버튼, 리다이렉트, 페이지 향상 등) 작동할 때 `페이지 스크립트` 선택 |
+| SSE 스크립트 | 스크립트가 서버 전송 이벤트 스트림 다시 쓸 때 `SSE 스크립트` 선택 |
+| 표준 인터페이스 인터셉션 | 위 두 옵션 중 어느 것도 선택하지 않으면 스크립트가 표준 비-SSE 인터페이스 응답 본문 다시 씀 |
+
+## 2. 스크립트와 플러그인
+
+작업 경로:
+
+1. 사이트 목록에서 **플러그인 관리** 클릭.
+2. 플러그인 생성.
+3. 이름, 버전, 비고, 연관 사이트 입력.
+4. 플러그인 업로드 또는 구성 입력.
+5. 스크립트 추가.
+6. 일치 URL, 스크립트 유형, 셀렉터, 콘텐츠 설정.
+7. 테스트 계정으로 검증.
+
+스크립트는 계정 유형, 워크스페이스, 내부 사이트에도 사용 가능.
+
+## 3. 민감한 페이지 콘텐츠 제어
+
+다음에 적합:
+
+- 가격 숨기기.
+- 고객 프라이버시 필드 숨기기.
+- 직원이 조작 허용 안 된 버튼과 영역 제거.
+- 특정 URL의 페이지 영역 숨기기.
+- 페이지 영역 다시 쓰기.
+
+셀렉터는 대상 사이트 변경 후 무효화될 수 있으므로 회귀 테스트 필요.
+
+## 페이지 스크립트 도구
+
+웹 페이지에서 직접 스크립트 작성하고 테스트하는 것은 편리하지 않음. GitHub에서 공식 스크립트 에디터 다운로드 가능: https://github.com/sa2web/sa2web-script-editor.
+
+설치 파일 다운로드 및 압축 해제 후 `sa2web.exe` 클릭하여 스크립트 에디터 시작. @fig-sa2web-script-editor 참조.
+
+![Sa2web 스크립트 에디터](/images/sa2web-script-editor.png){#fig-sa2web-script-editor}
+
+다음 두 예제로 기능 시연.
+
+## 예제 1: 공식 웹사이트 헤더 배경을 코랄로 변경
+
+1. URL 필드에 `https://www.sa2web.com` 입력.
+2. `페이지 스크립트` 선택. 스크립트가 페이지 콘텐츠 작동 의미.
+3. `CSS/XPath 셀렉터`에 `*` 입력. 일치 요소가 페이지에 나타날 때 아래 스크립트 실행 의미.
+4. 스크립트 상자에 다음 자바스크립트 코드 입력. @fig-script-background 참조:
+
+```JavaScript
+// 여기에 코드 작성...
+// 헤더 요소가 페이지에 나타날 때 이벤트 리스너 함수 실행.
+api.dom.addConnectListener("header", () => {
+  // 페이지에서 헤더 요소 찾기.
+  const header = api.dom.querySelector(document, "header");
+  // 헤더 요소 배경색을 lightcoral로 변경.
+  header.style.backgroundColor = 'lightcoral';
+});
+```
+
+![Sa2web 배경색 스크립트](/images/script-background.png){#fig-script-background}
+
+**스크립트 실행** 클릭하여 스크립트 테스트. 왼쪽 웹사이트 열리고 스크립트 실행. @fig-script-editor-run-script 참조.
+
+![Sa2web 스크립트 테스트 결과](/images/script-editor-run-script.png){#fig-script-editor-run-script}
+
+결과가 기대치 충족하면 위 내용을 페이지에 복사. @fig-edit-script-on-page 참조.
+
+![Sa2web 고급 사이트 구성에 스크립트 입력](/images/edit-script-on-page.png){#fig-edit-script-on-page}
+
+**추가** 클릭, 그 다음 **구성 저장** 클릭. 사용자가 프론트엔드에서 로그인하고 사이트 접근하면 내비게이션 바가 코랄로 변함. @fig-official-change-background 참조.
+
+![Sa2web 프론트엔드 접근 결과](/images/official-change-background.png){#fig-official-change-background}
+
+## 예제 2: 공식 웹사이트 중앙에 페이지 뷰 표시
+
+이 예제는 주로 `api.user`로 데이터 저장 및 표시, 데이터베이스에 영구 저장. 여기서는 공식 웹사이트 페이지에 페이지 뷰 카운터 표시. @fig-script-add-page-count 참조.
+
+```JavaScript
+api.dom.addConnectListener('body', async (con) => {
+  if (window != window.top) return;
+  if (window.isCounted) {
+    return;
+  }
+  window.isCounted = true;
+  // 현재 사이트만으로 페이지 뷰 카운트.
+  await api.user.incr('counter', 1, true, false, false);
+  // 현재 사이트만으로 페이지 뷰 가져오기.
+  const ret = await api.user.get('counter', true, false, false);
+  document.body.insertAdjacentHTML('beforeend', `<div style='position: fixed;background-color:red;color:white;left:50%;top:50%;width:100px;height:100px;line-height:100px;text-align:center;font-size:50px'>
+  ${ret.value}</div>`);
+});
+```
+
+![Sa2web 페이지 뷰 카운터 스크립트 추가](/images/script-add-page-count.png){#fig-script-add-page-count}
+
+**추가**와 **저장** 클릭 약 1분 후 Sa2web 프론트엔드에서 사이트 접근. 페이지 중앙에 빨간 박스 나타나 페이지 뷰 카운트 표시. 각 방문 또는 리프레시마다 카운트 1 증가. @fig-script-page-count 참조.
+
+![Sa2web 페이지 카운터 효과](/images/script-page-count.png){#fig-script-page-count}
+
+물론 `api.user`는 이보다 더 많은 API 제공. 계정별, 기기별 데이터 저장 및 검색도 가능. 전체 API는 @sec-script-api 참조.
+
+이 두 예제는 가장 기본적인 사이트 커스터마이징 기능 일부만 시연. `api.http` 같은 다른 API 통해 엔터프라이즈 시스템과 깊게 통합하여 더 나은 경험 제공 가능.
+
+## 4. `window.api`
+
+페이지 스크립트와 표준 인터페이스 인터셉션 스크립트 사용 가능:
+
+```ts
+window.api
+```
+
+주로 `user`, `dom`, `utils`, `config`, `header()` 관련 API 포함.
+
+완전한 인터페이스는 @sec-script-api 참조.

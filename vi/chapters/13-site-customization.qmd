@@ -1,0 +1,132 @@
+# Tùy chỉnh Trang {#sec-site-customization}
+
+## Mục tiêu
+
+Dùng script trong cấu hình trang nâng cao, hoặc script trong plugin trang, để ẩn, xóa và viết lại trang, dữ liệu và giao diện bên trong trang.
+
+## 1. Cấu hình Trang Nâng cao
+
+Đi đến:
+
+```text
+Quản lý trang > Danh sách trang > Cấu hình
+```
+
+Cấu hình và thuật ngữ liên quan script bao gồm:
+
+| Cấu hình | Mục đích |
+|---|---|
+| Header yêu cầu / Header phản hồi | Cho phép script đọc header được chỉ định |
+| Script trang | Chọn `Script trang` khi script thao tác nội dung trang, như DOM, form, nút, chuyển hướng và nâng cao trang |
+| Script SSE | Chọn `Script SSE` khi script viết lại luồng sự kiện do server gửi |
+| Chặn giao diện tiêu chuẩn | Khi cả hai tùy chọn trên không được chọn, script viết lại body phản hồi giao diện tiêu chuẩn không phải SSE |
+
+## 2. Script và Plugin
+
+Đường dẫn thao tác:
+
+1. Nhấn **Quản lý Plugin** trong danh sách trang.
+2. Tạo plugin.
+3. Điền tên, phiên bản, ghi chú và trang liên kết.
+4. Tải lên plugin hoặc nhập cấu hình.
+5. Thêm script.
+6. Đặt URL khớp, loại script, selector và nội dung.
+7. Xác minh với tài khoản test.
+
+Script cũng có thể dùng cho loại tài khoản, workspace và trang nội bộ.
+
+## 3. Kiểm soát Nội dung Trang Nhạy cảm
+
+Phù hợp cho:
+
+- Ẩn giá.
+- Ẩn trường quyền riêng tư khách hàng.
+- Xóa nút và khu vực nhân viên không được phép thao tác.
+- Ẩn khu vực trang cho URL cụ thể.
+- Viết lại khu vực trang.
+
+Selector có thể trở nên vô hiệu sau khi trang mục tiêu thay đổi, nên cần test hồi quy.
+
+## Công cụ Script Trang
+
+Viết và test script trực tiếp trên trang web không tiện. Bạn có thể tải trình soạn thảo script chính thức từ GitHub: https://github.com/sa2web/sa2web-script-editor.
+
+Sau khi tải và giải nén file cài đặt, nhấn `sa2web.exe` để khởi động trình soạn thảo script, như hình @fig-sa2web-script-editor.
+
+![Sa2web script editor](/images/sa2web-script-editor.png){#fig-sa2web-script-editor}
+
+Hai ví dụ sau demo tính năng này.
+
+## Ví dụ 1: Đổi Nền Header Trang Chính Thức Sang Coral
+
+1. Nhập `https://www.sa2web.com` vào trường URL.
+2. Chọn `Script trang`, nghĩa là script thao tác nội dung trang.
+3. Nhập `*` vào `CSS/XPath selector`, nghĩa là script dưới chạy khi phần tử khớp xuất hiện trên trang.
+4. Nhập mã JavaScript sau vào hộp script, như hình @fig-script-background:
+
+```JavaScript
+// Vui lòng viết mã của bạn ở đây...
+// Thực thi hàm lắng nghe sự kiện khi phần tử header xuất hiện trên trang.
+api.dom.addConnectListener("header", () => {
+  // Tìm phần tử header trên trang.
+  const header = api.dom.querySelector(document, "header");
+  // Đổi màu nền phần tử header sang lightcoral.
+  header.style.backgroundColor = 'lightcoral';
+});
+```
+
+![Sa2web background-color script](/images/script-background.png){#fig-script-background}
+
+Nhấn **Chạy Script** để test script. Website bên trái mở và script chạy, như hình @fig-script-editor-run-script.
+
+![Sa2web script test result](/images/script-editor-run-script.png){#fig-script-editor-run-script}
+
+Sau khi kết quả đạt kỳ vọng, copy nội dung trên vào trang, như hình @fig-edit-script-on-page.
+
+![Sa2web fill script into advanced site configuration](/images/edit-script-on-page.png){#fig-edit-script-on-page}
+
+Nhấn **Thêm**, sau đó nhấn **Lưu Cấu hình**. Khi user đăng nhập và truy cập trang từ frontend, thanh điều hướng chuyển sang coral, như hình @fig-official-change-background.
+
+![Sa2web frontend access result](/images/official-change-background.png){#fig-official-change-background}
+
+## Ví dụ 2: Hiện Lượt xem Giữa Trang Trang Chính Thức
+
+Ví dụ này chủ yếu dùng `api.user` để lưu và hiển thị dữ liệu, với lưu trữ bền vững trong database. Ở đây dùng để hiển thị bộ đếm lượt xem trang trên trang trang chính thức, như hình @fig-script-add-page-count.
+
+```JavaScript
+api.dom.addConnectListener('body', async (con) => {
+  if (window != window.top) return;
+  if (window.isCounted) {
+    return;
+  }
+  window.isCounted = true;
+  // Đếm lượt xem theo trang hiện tại.
+  await api.user.incr('counter', 1, true, false, false);
+  // Lấy lượt xem theo trang hiện tại.
+  const ret = await api.user.get('counter', true, false, false);
+  document.body.insertAdjacentHTML('beforeend', `<div style='position: fixed;background-color:red;color:white;left:50%;top:50%;width:100px;height:100px;line-height:100px;text-align:center;font-size:50px'>
+  ${ret.value}</div>`);
+});
+```
+
+![Sa2web add page-view counter script](/images/script-add-page-count.png){#fig-script-add-page-count}
+
+Khoảng một phút sau khi nhấn **Thêm** và **Lưu**, truy cập trang từ frontend Sa2web. Một hộp đỏ xuất hiện giữa trang, hiển thị số lượt xem. Mỗi truy cập hoặc làm mới tăng số đếm 1, như hình @fig-script-page-count.
+
+![Sa2web page counter effect](/images/script-page-count.png){#fig-script-page-count}
+
+Tất nhiên, `api.user` cung cấp nhiều API hơn những cái này. Nó cũng có thể lưu và lấy dữ liệu theo tài khoản và theo thiết bị. Xem @sec-script-api cho API hoàn chỉnh.
+
+Hai ví dụ này chỉ demo một số tính năng tùy chỉnh trang cơ bản nhất. Bạn cũng có thể tích hợp sâu với hệ thống doanh nghiệp qua các API khác, như `api.http`, để cung cấp trải nghiệm tốt hơn.
+
+## 4. `window.api`
+
+Script trang và script chặn giao diện tiêu chuẩn có thể dùng:
+
+```ts
+window.api
+```
+
+Nó chủ yếu bao gồm API liên quan đến `user`, `dom`, `utils`, `config` và `header()`.
+
+Để biết giao diện hoàn chỉnh, xem @sec-script-api.

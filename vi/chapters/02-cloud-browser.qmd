@@ -1,0 +1,144 @@
+# Bật Cloud Browser (Trình duyệt đám mây)
+
+## Mục tiêu
+
+Hoàn thành luồng cơ bản **máy -> thể hiện trình duyệt -> Cloud Browser người dùng** để người dùng có thể mở trình duyệt từ xa từ frontend Sa2web.
+
+Cloud Browser tạo hồ sơ trình duyệt từ xa riêng biệt cho từng môi trường truy cập dựa trên người dùng, proxy và mạng cô lập.
+
+Ví dụ, sau khi User A truy cập và đăng nhập trang web qua Cloud Browser, User B sẽ không kế thừa trạng thái đăng nhập của User A khi truy cập cùng trang web. Cookie, phiên và dữ liệu trình duyệt khác của họ vẫn được cô lập với nhau.
+
+Tương tự, ngay cả với cùng một user, nếu User A truy cập cùng trang web qua Proxy A và Proxy B, hai môi trường truy cập sẽ dùng hồ sơ trình duyệt riêng biệt. Cookie, phiên và dữ liệu trình duyệt khác của họ vẫn được cô lập và không được chia sẻ giữa hai môi trường.
+
+## Thêm Máy
+
+Đi đến:
+
+```text
+Quản lý trình duyệt > Quản lý máy
+```
+
+Nhấn **Thêm máy** và điền:
+
+| Trường | Khuyến nghị |
+|---|---|
+| Địa chỉ IP | IP riêng của máy chủ triển khai Sa2web hiện tại |
+| Cổng | Mặc định `7000` |
+
+Sau khi lưu, quay lại danh sách máy và xác nhận trạng thái máy bình thường, như hình @fig-add-machine.
+
+![Sa2web add machine](/images/add-machine.png){#fig-add-machine}
+
+## Thêm Trình duyệt
+
+Đi đến:
+
+```text
+Quản lý trình duyệt > Danh sách trình duyệt
+```
+
+Nhấn **Thêm Navigator**, như hình @fig-add-browser, và điền:
+
+| Trường | Khuyến nghị |
+|---|---|
+| Máy | Chọn máy vừa thêm |
+| Phiên bản trình duyệt | Dùng phiên bản trình duyệt tích hợp |
+| ID trình duyệt | Nhập ID dễ nhận biết, ví dụ `chrome100` |
+
+Chọn chế độ mạng theo tình huống của bạn:
+
+| Chế độ | Mô tả |
+|---|---|
+| Host Network | Dùng mạng cục bộ của máy chủ. Có thể cấu hình proxy HTTP/SOCKS5. Phù hợp cho tình huống truy cập chung |
+| Isolated Network | Tạo môi trường mạng độc lập cho trình duyệt này. DNS, UDP, WebRTC và lưu lượng khác được接管. Phù hợp cho yêu cầu cô lập mạng mạnh hơn |
+
+Nếu chọn **Isolated Network**, bạn cần cấu hình proxy mạng cho trình duyệt hiện tại. Proxy được cấu hình ở nơi khác trong hệ thống, như proxy cấp trang, sẽ được nối chuỗi trên proxy mạng này.
+
+Sau khi lưu, nhấn khởi động trình duyệt. Khi trạng thái thành `Running`, thể hiện trình duyệt có thể được điều phối, như hình @fig-browser-status.
+
+![Sa2web add browser](/images/add-browser.png){#fig-add-browser}
+
+![Sa2web browser status](/images/browser-status.png){#fig-browser-status}
+
+## Cấu hình Trình duyệt
+
+Trong danh sách trình duyệt, nhấn nút "![](/images/wrench.png){width=20px}" để mở trang cấu hình trình duyệt.
+
+Cài đặt thường dùng bao gồm:
+
+- Phiên bản kernel.
+- Hệ điều hành.
+- Thương hiệu trình duyệt.
+- Phiên bản trình duyệt.
+- Mô hình điện thoại di động.
+- Múi giờ.
+- Ngôn ngữ.
+
+![Sa2web browser configuration](/images/browser-config.png){#fig-browser-config}
+
+Để biết chi tiết cấu hình hoàn chỉnh hơn, xem phần cấu hình thể hiện trình duyệt trong @sec-sites-inner-sites-config, "Cấu hình Trang và Trang nội bộ".
+
+## Tạo và Cấp quyền Nhóm
+
+Đi đến:
+
+```text
+Quản lý nhóm
+```
+
+Thêm nhóm mới, ví dụ `demo`, như hình @fig-group-management. Sau đó mở cấu hình user cho nhóm và thêm user test vào nhóm. Khi test lần đầu, bạn có thể chỉ có user `system`, hãy thêm nó vào nhóm và lưu, như hình @fig-group-users.
+
+![Sa2web group management](/images/group-management.png){#fig-group-management}
+
+![Sa2web group users](/images/group-users.png){#fig-group-users}
+
+Tiếp theo, mở **Quyền hạn (Privileges)** và chọn tính năng cần thiết cho nhóm `demo`. Để xác thực tối thiểu, chọn ít nhất **Cloud Browser** và lưu, như hình @fig-group-privileges.
+
+Nếu bạn dùng mạng cô lập trước đó, cũng hãy đi đến:
+
+```text
+Cloud Browser Isolated Networks (Mạng cô lập Cloud Browser)
+```
+
+Chọn trình duyệt vừa tạo, ví dụ `chrome100`, và lưu, như hình @fig-group-privileges-isolated.
+
+![Sa2web group privileges](/images/group-privileges.png){#fig-group-privileges}
+
+![Sa2web isolated network authorization](/images/group-privileges-isolated.png){#fig-group-privileges-isolated}
+
+## Xác thực Frontend Người dùng
+
+Mở frontend người dùng:
+
+```text
+https://<APP_DOMAIN>/
+```
+
+Bạn cũng có thể mở trực tiếp trang đăng nhập:
+
+```text
+https://<APP_DOMAIN>/app/login
+```
+
+Đăng nhập bằng user được cấp quyền. Sau khi vào frontend, bạn sẽ thấy hộp tìm kiếm và nhập URL gần giữa trên cùng trang, với bộ chọn proxy và mạng ở gần đó.
+
+Nếu bạn cấu hình mạng cô lập, trước tiên chọn trình duyệt được cấp quyền trong menu thả xuống mạng, ví dụ `chrome100`. Sau đó nhập từ khóa hoặc URL vào hộp nhập:
+
+```text
+demo
+https://www.sa2web.com
+```
+
+Nếu tab mới mở và duyệt web hoạt động bình thường, Cloud Browser đã sẵn sàng, như hình @fig-cloud-browser.
+
+![Sa2web Cloud Browser](/images/cloud-browser.png){#fig-cloud-browser}
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Máy đã được thêm với cổng `7000`.
+- [ ] Trình duyệt đã được thêm và ở trạng thái `Running`.
+- [ ] User đã được thêm vào đúng nhóm.
+- [ ] Nhóm đã được cấp quyền **Cloud Browser**.
+- [ ] Nếu dùng mạng cô lập, nhóm đã được cấp quyền cho trình duyệt tương ứng.
+- [ ] Frontend người dùng có thể mở Cloud Browser.
+- [ ] Trình duyệt từ xa có thể truy cập trang test.

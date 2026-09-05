@@ -2,25 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Sa2web Quickstart and Practical Guide | Sa2web 快速入门与实战指南</title>
+  <title>Sa2web Quickstart and Practical Guide | Multilingual Sa2web Guide</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Sa2web Quickstart and Practical Guide is a bilingual hands-on book for deploying Sa2web, building enterprise cloud browser access, SaaS access control, inner site access, workspaces, permissions, audits, watermarking, and MCP / AI Agent browser workflows.">
-  <meta name="keywords" content="Sa2web, Sa2web guide, Sa2web tutorial, Sa2web quickstart, remote browser, cloud browser, browser bastion, enterprise browser, SaaS access control, inner site access, MCP browser, AI Agent browser access, 企业远程浏览器, 云浏览器, 浏览器堡垒, Sa2web 教程, Sa2web 快速入门">
+  <meta name="description" content="Sa2web Quickstart and Practical Guide is a multilingual hands-on book for deploying Sa2web, building enterprise cloud browser access, SaaS access control, inner site access, workspaces, permissions, audits, watermarking, and MCP / AI Agent browser workflows.">
+  <meta name="keywords" content="Sa2web, Sa2web guide, Sa2web tutorial, Sa2web quickstart, remote browser, cloud browser, browser bastion, enterprise browser, SaaS access control, inner site access, MCP browser, AI Agent browser access, 企业远程浏览器, 云浏览器, 浏览器堡垒, Sa2web 教程, Sa2web 快速入门, Sa2web मार्गदर्शिका, Sa2web त्वरित आरंभ, Sa2web hướng dẫn, Sa2web khởi đầu nhanh, Sa2web 가이드, Sa2web 빠른 시작, Sa2web ガイド, Sa2web クイックスタート">
   <meta name="author" content="Alex Mercer">
   <meta name="robots" content="index,follow">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Sa2web Quickstart and Practical Guide">
-  <meta property="og:description" content="A bilingual practical guide to Sa2web: from private deployment to enterprise remote browser access governance.">
+  <meta property="og:description" content="A multilingual practical guide to Sa2web: from private deployment to enterprise remote browser access governance.">
   <meta property="og:url" content="https://quickstart.sa2web.com/">
   <meta property="og:image" content="en/images/cover.png">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="zh_CN">
+  <meta property="og:locale:alternate" content="hi_IN">
+  <meta property="og:locale:alternate" content="vi_VN">
+  <meta property="og:locale:alternate" content="ko_KR">
+  <meta property="og:locale:alternate" content="ja_JP">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Sa2web Quickstart and Practical Guide">
   <meta name="twitter:description" content="Deploy Sa2web and build controlled, auditable enterprise browser access for SaaS, inner sites, workspaces, and AI Agents.">
   <meta name="twitter:image" content="en/images/cover.png">
   <link rel="alternate" hreflang="en" href="en/">
   <link rel="alternate" hreflang="zh-CN" href="zh/">
+  <link rel="alternate" hreflang="hi" href="hi/">
+  <link rel="alternate" hreflang="vi" href="vi/">
+  <link rel="alternate" hreflang="ko" href="ko/">
+  <link rel="alternate" hreflang="ja" href="ja/">
   <link rel="alternate" hreflang="x-default" href="en/">
   <link rel="canonical" href="https://quickstart.sa2web.com/">
   <link rel="icon" href="en/images/favicon.svg" type="image/svg+xml">
@@ -116,6 +124,8 @@
 
     nav {
       display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
       gap: 10px;
     }
 
@@ -358,7 +368,7 @@
     /* Language Band */
     .language-band {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 20px;
       padding: 10px;
       border: 1px solid var(--border);
@@ -457,6 +467,9 @@
         flex-direction: column;
         align-items: flex-start;
       }
+      nav {
+        justify-content: flex-start;
+      }
       .actions {
         flex-direction: column;
       }
@@ -477,8 +490,8 @@
         "@type": "Person",
         "name": "Alex Mercer"
       },
-      "inLanguage": ["zh-CN", "en"],
-      "description": "A bilingual practical guide to deploying Sa2web and building enterprise remote browser access governance.",
+      "inLanguage": ["zh-CN", "en", "hi", "vi", "ko", "ja"],
+      "description": "A multilingual practical guide to deploying Sa2web and building enterprise remote browser access governance.",
       "sameAs": [
         "https://github.com/sa2web/sa2web-quickstart-practical-guide",
         "https://www.sa2web.com/"
@@ -504,6 +517,10 @@
       <nav aria-label="Resources">
         <a href="en/">English</a>
         <a href="zh/">简体中文</a>
+        <a href="hi/">हिन्दी</a>
+        <a href="vi/">Tiếng Việt</a>
+        <a href="ko/">한국어</a>
+        <a href="ja/">日本語</a>
         <a href="https://github.com/sa2web/sa2web-quickstart-practical-guide" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://www.sa2web.com/" target="_blank" rel="noopener noreferrer">Sa2web Official</a>
       </nav>
@@ -515,7 +532,7 @@
           <span class="eyebrow">Enterprise Remote Browser Guide</span>
           <h1 id="hero-title">Sa2web<br> Quickstart and Practical Guide</h1>
           <p class="subtitle">
-            A bilingual hands-on book for enterprise remote browsers, cloud browser governance, SaaS access control, inner site access, audit replay, and MCP / AI Agent browser workflows.
+            A multilingual hands-on book for enterprise remote browsers, cloud browser governance, SaaS access control, inner site access, audit replay, and MCP / AI Agent browser workflows.
           </p>
           <div class="actions" aria-label="Primary reading actions">
             <a class="button primary" href="en/">
@@ -523,6 +540,10 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
             </a>
             <a class="button" href="zh/">阅读中文版</a>
+            <a class="button" href="hi/">हिन्दी में पढ़ें</a>
+            <a class="button" href="vi/">Đọc tiếng Việt</a>
+            <a class="button" href="ko/">한국어로 읽기</a>
+            <a class="button" href="ja/">日本語で読む</a>
           </div>
         </div>
         <div class="cover" aria-hidden="true">
@@ -619,6 +640,34 @@
             </div>
             <a href="zh/" aria-label="Open Chinese Sa2web guide">进入中文版 &rarr;</a>
           </article>
+          <article class="language-card">
+            <div>
+              <h3>हिन्दी संस्करण</h3>
+              <p>Sa2web परिनियोजन, एंटरप्राइज ब्राउज़र एक्सेस गवर्नेंस, SaaS एक्सेस, वर्कस्पेस, ऑडिट और MCP वर्कफ़्लो के लिए हिन्दी मार्गदर्शिका।</p>
+            </div>
+            <a href="hi/" aria-label="Open Hindi Sa2web guide">हिन्दी पुस्तक खोलें &rarr;</a>
+          </article>
+          <article class="language-card">
+            <div>
+              <h3>Phiên bản tiếng Việt</h3>
+              <p>Hướng dẫn tiếng Việt về triển khai Sa2web, quản trị truy cập trình duyệt doanh nghiệp, SaaS, workspace, kiểm toán và quy trình MCP.</p>
+            </div>
+            <a href="vi/" aria-label="Open Vietnamese Sa2web guide">Mở sách tiếng Việt &rarr;</a>
+          </article>
+          <article class="language-card">
+            <div>
+              <h3>한국어판</h3>
+              <p>Sa2web 배포, 기업 브라우저 접근 거버넌스, SaaS 접근, 워크스페이스, 감사 및 MCP 워크플로를 위한 한국어 가이드입니다.</p>
+            </div>
+            <a href="ko/" aria-label="Open Korean Sa2web guide">한국어 책 열기 &rarr;</a>
+          </article>
+          <article class="language-card">
+            <div>
+              <h3>日本語版</h3>
+              <p>Sa2web のデプロイ、企業ブラウザーアクセス管理、SaaS アクセス、ワークスペース、監査、MCP ワークフローを扱う日本語ガイドです。</p>
+            </div>
+            <a href="ja/" aria-label="Open Japanese Sa2web guide">日本語版を開く &rarr;</a>
+          </article>
         </div>
       </section>
     </main>
@@ -626,7 +675,7 @@
     <footer>
       <p>
         This site is generated from a Quarto Book project. Source entry files:
-        <a href="en/">English book</a> and <a href="zh/">Chinese book</a>.
+        <a href="en/">English book</a>, <a href="zh/">Chinese book</a>, <a href="hi/">Hindi book</a>, <a href="vi/">Vietnamese book</a>, <a href="ko/">Korean book</a>, and <a href="ja/">Japanese book</a>.
         View the source on <a href="https://github.com/sa2web/sa2web-quickstart-practical-guide" target="_blank" rel="noopener noreferrer">GitHub</a>
         or visit the <a href="https://www.sa2web.com/" target="_blank" rel="noopener noreferrer">Sa2web official website</a>.
       </p>

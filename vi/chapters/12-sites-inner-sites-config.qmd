@@ -1,0 +1,307 @@
+# Cấu hình Trang và Trang Nội bộ {#sec-sites-inner-sites-config}
+
+## Mục tiêu
+
+Hiểu các tùy chọn phổ biến trên trang cấu hình trang và trang nội bộ, và biết khi nào bật mô phỏng trình duyệt, proxy, múi giờ, WebRTC, mã hóa URL, watermark, ẩn nội dung nhạy cảm, chặn URL, ẩn/xóa kiểm soát trang và cấu hình script.
+
+Chương này dành cho quản trị viên. Điểm vào cấu hình thường ở danh sách trang hoặc danh sách trang nội bộ: tìm trang mục tiêu và nhấn nút cấu hình.
+
+```text
+Quản lý trang > Danh sách trang > Cấu hình
+Quản lý trang > Danh sách trang nội bộ > Cấu hình
+```
+
+Cấu hình trang và cấu hình trang nội bộ cung cấp các khả năng cốt lõi tương tự. Cấu hình trang nội bộ thường dùng cho ERP, CRM, hệ thống đơn hàng, backend dữ liệu và các hệ thống intranet khác của doanh nghiệp. Cấu hình trang thường dùng cho trang SaaS, trang kinh doanh bên ngoài hoặc các điểm truy cập web cần kiểm soát thống nhất.
+
+::: {.callout-note}
+Chương này bao gồm cấu hình hành vi truy cập và chính sách bảo mật, không phải việc thêm trang cơ bản. Để biết luồng trang nội bộ cơ bản, xem Chương 6. Để biết phân quyền, xem Chương 7.
+:::
+
+## Khác biệt Đối tượng Cấu hình
+
+Các đối tượng cấu hình dễ nhầm lẫn trong Sa2web chia thành ba loại chính:
+
+| Đối tượng cấu hình | Điểm vào | Phạm vi |
+|---|---|---|
+| Cấu hình thể hiện trình duyệt | Quản lý trình duyệt > Danh sách trình duyệt > Cấu hình | Ảnh hưởng kernel, thương hiệu, hệ thống, tham số khởi động, cache và hành vi liên quan phần cứng của một thể hiện trình duyệt |
+| Cấu hình trang | Quản lý trang > Danh sách trang > Cấu hình | Ảnh hưởng hành vi truy cập khi user truy cập trang SaaS hoặc trang bên ngoài |
+| Cấu hình trang nội bộ | Quản lý trang > Danh sách trang nội bộ > Cấu hình | Ảnh hưởng hành vi truy cập khi user truy cập hệ thống nội bộ |
+
+Cách hiểu đơn giản:
+
+- Cấu hình thể hiện trình duyệt quyết định môi trường trình duyệt nào chạy trang.
+- Cấu hình trang và trang nội bộ quyết định cách truy cập trang đó được kiểm soát.
+- Quyền nhóm quyết định user nào có thể thấy và dùng các điểm vào này.
+
+## Cấu hình Thể hiện Trình duyệt
+
+Cấu hình thể hiện trình duyệt chủ yếu đến từ trang cấu hình trong danh sách trình duyệt. Nó không dành cho một URL cụ thể; nó áp dụng cho một thể hiện trình duyệt từ xa cụ thể.
+
+| Cài đặt | Mục đích | Khuyến nghị |
+|---|---|---|
+| Phiên bản kernel | Chọn kernel Chromium thực sự chạy | Ưu tiên phiên bản tích hợp, đã xác minh |
+| Hệ điều hành | Đặt loại hệ thống trình bày bởi môi trường trình duyệt | Giữ nhất quán với chiến lược kiểm soát rủi ro của trang mục tiêu |
+| Thương hiệu | Chrome, Edge, Opera, Vivaldi và các thương hiệu trình duyệt khác | Thường chọn Chrome hoặc thương hiệu yêu cầu bởi kinh doanh |
+| Phiên bản thương hiệu | Chọn phiên bản thương hiệu tương ứng | Khớp với phiên bản kernel và tương thích trang mục tiêu |
+| Mô hình di động | Mô phỏng thiết bị di động | Chỉ bật khi trang mục tiêu cần bố cục di động |
+| Múi giờ | Đặt múi giờ môi trường trình duyệt | Khớp với khu vực tài khoản kinh doanh |
+
+Cài đặt nâng cao cũng có thể điều chỉnh tham số khởi động và cài đặt runtime Chrome.
+
+### Tham số Khởi động
+
+Tham số khởi động được ghi vào tập tham số dùng khi trình duyệt khởi động. Mặc định phổ biến bao gồm:
+
+| Tham số | Mục đích |
+|---|---|
+| `disable-gpu` | Tắt GPU, thường hữu ích như dự phòng tương thích trên máy chủ |
+| `no-sandbox` | Tham số runtime Chromium phổ biến trong môi trường container |
+| `ignore-certificate-errors` | Bỏ qua lỗi chứng chỉ, phù hợp cho test hoặc môi trường chứng chỉ tự ký |
+| `lang` | Chỉ định ngôn ngữ trình duyệt, ví dụ `en-US` |
+| `autoplay-policy` | Kiểm soát chính sách tự động phát media |
+
+::: {.callout-warning}
+Tham số khởi động ảnh hưởng độ ổn định và ranh giới bảo mật của trình duyệt. Trừ khi bạn rõ ràng biết trang mục tiêu hoặc môi trường runtime yêu cầu, đừng tùy ý xóa tham số mặc định hoặc thêm tham số lạ.
+:::
+
+### Cài đặt Runtime Chrome
+
+| Cài đặt | Mục đích |
+|---|---|
+| Thư mục tạm | Vị trí file tạm runtime trình duyệt |
+| Thư mục cache | Vị trí file cache trình duyệt |
+| Kích thước ảnh tối đa | Kiểm soát kích thước tối đa cho chụp hoặc truyền ảnh |
+| Số phần cứng | Mã định danh phần cứng dùng để phân biệt môi trường trình duyệt; chỉ số |
+| Tăng tốc phần cứng | Có bật tăng tốc phần cứng không |
+| Xóa dữ liệu user khi khởi động | Xóa dữ liệu user trình duyệt mỗi lần trình duyệt khởi động |
+
+Nếu trang mục tiêu phụ thuộc mạnh vào trạng thái đăng nhập hoặc cache cục bộ, đừng nhẹ dạ bật **Xóa dữ liệu user khi khởi động**. Nếu bạn quan tâm hơn đến phiên một lần và môi trường sạch, bạn có thể bật nó.
+
+## Cài đặt Cơ bản
+
+Cài đặt cơ bản trên trang cấu hình trang và trang nội bộ kiểm soát trình bày trình duyệt, watermark bảo mật và thông tin hiển thị cho user khi truy cập.
+
+| Cài đặt | Mục đích | Tình huống phổ biến |
+|---|---|---|
+| Bật mô phỏng | Bật mô phỏng thương hiệu trình duyệt hoặc thiết bị di động | Trang mục tiêu hiển thị trang khác nhau theo trình duyệt hoặc loại thiết bị |
+| Mô phỏng thương hiệu trình duyệt | Mô phỏng Chrome, Edge, Opera hoặc Vivaldi | Tương thích trang hoặc yêu cầu kinh doanh cần thương hiệu trình duyệt cố định |
+| Mô hình thiết bị di động | Mô phỏng mẫu điện thoại | Portal admin di động, trang H5 hoặc tính năng chỉ dành cho di động |
+| Ẩn tên tài khoản | Ngăn lộ tên tài khoản trong frontend | Chia sẻ đa tài khoản, truy cập nhà thầu, vận hành hỗ trợ khách hàng |
+| Mã hóa URL | Tránh hiển thị trực tiếp URL gốc thực | Hệ thống nội bộ, portal nhà cung cấp, SaaS nhạy cảm hoặc trang bên ngoài |
+| Watermark hiển thị | Watermark hiển thị trên trang | Nhắc nhở người truy cập và truy vết |
+| Watermark ẩn | Watermark ẩn | Truy vết sau khi ảnh chụp lan truyền |
+| Vô hiệu hóa copy | Giới hạn copy nội dung trang | Thông tin khách hàng, dữ liệu đơn hàng, nội dung hợp đồng |
+| Vô hiệu hóa in | Giới hạn in | Ngăn xuất hàng loạt ra giấy hoặc PDF |
+| Vô hiệu hóa chỉnh sửa | Giới hạn thao tác chỉnh sửa | Truy cập xem và kiểm toán chỉ đọc |
+
+::: {.callout-tip}
+Bật cài đặt bảo mật theo nguyên tắc tối thiểu cần thiết. Ví dụ, nếu bạn chỉ muốn tránh lộ địa chỉ thực, bật mã hóa URL trước. Nếu chia sẻ ảnh chụp cũng là mối quan ngại, thêm watermark. Nếu nội dung bản thân nhạy cảm, cân nhắc vô hiệu hóa copy, in và chỉnh sửa.
+:::
+
+## Cài đặt Proxy
+
+Cài đặt proxy quyết định lưu lượng đi ra đâu khi truy cập trang mục tiêu.
+
+Sau khi bật proxy, bạn có thể chọn:
+
+| Chế độ proxy | Mô tả |
+|---|---|
+| `direct` | Kết nối trực tiếp |
+| `auto_detect` | Tự động phát hiện proxy |
+| `pac_script` | Dùng script PAC |
+| `fixed_servers` | Dùng proxy server cố định |
+| `system` | Dùng proxy hệ thống |
+
+Định dạng proxy server cố định thường là:
+
+```text
+http://host:port
+https://host:port
+socks5://host:port
+```
+
+Bạn cũng có thể cấu hình:
+
+| Cài đặt | Mô tả |
+|---|---|
+| URL script PAC | Dùng trong chế độ `pac_script` |
+| Danh sách bỏ qua proxy | Ví dụ `<local>,<loopback>,192.168.0.0/16,172.16.0.0/12,10.0.0.0/8` |
+| Tên user proxy | Điền khi proxy yêu cầu xác thực |
+| Mật khẩu proxy | Điền khi proxy yêu cầu xác thực |
+
+Trang nội bộ thường không cần proxy internet công khai; chúng phụ thuộc hơn vào khả năng truy cập định tuyến từ nút trình duyệt đến hệ thống intranet. Trang SaaS bên ngoài có thể cần proxy cố định nếu chúng yêu cầu IP ra cụ thể.
+
+## Cài đặt Múi giờ
+
+Múi giờ ảnh hưởng môi trường thời gian trình duyệt mà trang mục tiêu thấy và cũng có thể ảnh hưởng hiển thị thời gian và phạm vi dữ liệu kinh doanh mặc định trên một số trang.
+
+Khuyến nghị:
+
+- Nếu không dùng proxy, dùng múi giờ nơi doanh nghiệp đặt.
+- Nếu dùng proxy, dùng múi giờ khu vực IP proxy.
+
+## Cài đặt WebRTC
+
+Cấu hình trang bao gồm hai loại tùy chọn liên quan WebRTC:
+
+| Cài đặt | Mục đích |
+|---|---|
+| Vô hiệu hóa truyền thông WebRTC trên trang | Chặn trang dùng trực tiếp truyền thông WebRTC |
+| Whitelist địa chỉ WebRTC | Cho phép ngoại lệ địa chỉ cụ thể khi WebRTC bị tắt |
+| Bật WebRTC | Cài đặt nâng cao kiểm soát khả năng hiển thị hoặc truyền thông liên quan Sa2web |
+
+Nếu trang mục tiêu không cần âm thanh/video, truyền thông thời gian thực hoặc tính năng WebRTC trình duyệt, tắt WebRTC trang có thể giảm lộ môi trường mạng thực. Nếu trang mục tiêu phụ thuộc vào WebRTC, như họp video, hỗ trợ khách hàng trực tuyến hoặc backend âm thanh/video thời gian thực, đừng tắt WebRTC. Thay vào đó, dùng trang mục tiêu bên trong thể hiện trình duyệt có mạng cô lập.
+
+## Kiểm soát Nội dung Nhạy cảm và URL
+
+Cấu hình trang và trang nội bộ cung cấp ba khả năng kiểm soát trực tiếp.
+
+| Cấu hình | Mục đích | Ví dụ |
+|---|---|---|
+| Ẩn từ khóa nhạy cảm | Ẩn văn bản nhạy cảm xuất hiện trên trang | Số điện thoại khách hàng, token, tên nhà cung cấp |
+| Danh sách chặn URL | Chặn truy cập URL khớp | API xuất, đường dẫn admin nguy hiểm |
+| Trang thứ ba | Cho phép hoặc liên kết địa chỉ trang thứ ba có thể chuyển hướng khi truy cập | Trang đăng nhập, SSO, thanh toán, domain vé |
+
+Ẩn từ khóa nhạy cảm hỗ trợ thêm nhiều dòng, một từ khóa nhạy cảm mỗi dòng. Chặn URL nên bắt đầu từ đường dẫn rủi ro cao như xuất, tải xuống, xóa hàng loạt, cài đặt hệ thống.
+
+::: {.callout-warning}
+Ẩn từ khóa nhạy cảm và kiểm soát ẩn là kiểm soát lớp trang; chúng không thay thế quyền backend. Hoạt động rủi ro cao vẫn nên vô hiệu hóa hoặc gating phê duyệt trong chính hệ thống mục tiêu.
+:::
+
+## Kiểm soát Truy cập Nâng cao
+
+Cấu hình nâng cao kiểm soát cửa sổ, tải xuống, hành vi paste, truyền màn hình và sự kiện thay đổi URL.
+
+| Cài đặt | Xu hướng mặc định | Mô tả |
+|---|---|---|
+| Nhắc cửa sổ mới | Bật | Nhắc user khi trang mục tiêu mở cửa sổ mới |
+| Timeout cửa sổ mới | `20000` ms | Thời gian chờ tạo hoặc phản hồi cửa sổ mới |
+| Số cửa sổ tối đa | `3` | Giới hạn số cửa sổ mở đồng thời |
+| Giới hạn tải xuống | Bật | Kiểm soát tải file từ trang từ xa |
+| Kích thước tải lên tối đa | `2147483648` bytes | Kiểm soát kích thước file tải lên |
+| Độ dài văn bản paste tối đa | `2097152` | Kiểm soát kích thước văn bản paste một lần |
+| Độ dài file paste tối đa | `20971520` | Kiểm soát kích thước file paste |
+| Phương pháp truyền Canvas | `richcolor` | Kiểm soát chế độ truyền màn hình |
+| Khoảng cách Canvas | `0` ms | Khoảng cách làm mới cho chế độ truyền không dùng WebRTC |
+| Chiều rộng/cao Canvas tối đa | Phụ thuộc chế độ truyền | Giới hạn kích thước truyền màn hình |
+| Sự kiện thay đổi URL | Bật | Lắng nghe thay đổi URL trang cho script hoặc chính sách |
+
+Đối với hệ thống nội bộ nhạy cảm, trước tiên giới hạn tải xuống và kiểm soát số cửa sổ tối đa, sau đó nới lỏng kích thước tải lên và paste dựa trên nhu cầu kinh doanh. Đối với hệ thống đồ họa nặng, tập trung test phương pháp truyền Canvas và chất lượng ảnh.
+
+## Header Yêu cầu và Phản hồi
+
+Cấu hình header yêu cầu và header phản hồi chỉ định tên header cần được đọc hoặc xử lý bởi script.
+
+Cách dùng phổ biến:
+
+- Xác định tenant, môi trường hoặc tài khoản bằng header yêu cầu.
+- Xác định kiểu trả về giao diện bằng header phản hồi.
+- Cung cấp ngữ cảnh cho script trang hoặc script giao diện.
+- Gỡ lỗi hành vi trang mục tiêu sau các gateway, hệ thống SSO hoặc CDN khác nhau.
+
+Chỉ điền tên header ở đây, không phải nội dung yêu cầu hoặc phản hồi hoàn chỉnh.
+
+## Kiểm soát Xóa Trang và Ẩn Trang
+
+Quy tắc kiểm soát trang chia thành hai loại:
+
+| Loại | Hiệu quả |
+|---|---|
+| Kiểm soát xóa trang | Xóa phần tử khỏi trang theo URL khớp và XPath/CSS selector |
+| Kiểm soát ẩn trang | Ẩn phần tử theo URL khớp và XPath/CSS selector |
+
+Mỗi quy tắc chứa:
+
+| Trường | Mô tả |
+|---|---|
+| URL khớp | `*` nghĩa là tất cả trang. Xem @sec-matchUrl cho quy tắc URL khớp |
+| Selector | XPath/CSS selector. Có thể thêm nhiều selector. Xem @sec-matchSelector cho quy tắc selector |
+
+Cách dùng phổ biến:
+
+- Xóa nút như **Xuất**, **Tải xuống**, **Xóa**, **Cài đặt hệ thống**.
+- Ẩn giá chi phí, chi phí và trường quyền riêng tư khách hàng.
+- Ẩn khu vực rủi ro cao trên trang URL cụ thể.
+- Cung cấp giao diện đơn giản cho nhà thầu, nhân viên tạm thời và user cộng tác.
+
+Selector có thể trở nên vô hiệu sau khi trang mục tiêu thay đổi. Hãy test lại các quy tắc này sau mỗi lần nâng cấp hệ thống mục tiêu.
+
+## Cấu hình Script
+
+Cấu hình script phù hợp cho xử lý hành vi trang, đăng nhập phức tạp, phản hồi giao diện và nâng cao trang.
+
+Mỗi script chứa:
+
+| Trường | Mô tả |
+|---|---|
+| Tên script | Giúp quản trị viên nhận diện script |
+| URL khớp | Phạm vi URL script có hiệu lực. Xem @sec-matchUrl |
+| Script trang | Chạy trong môi trường trang; phù hợp cho thao tác DOM, xử lý nút, hỗ trợ form và nâng cao trang |
+| Script SSE | Xử lý luồng sự kiện do server gửi |
+| Selector | Script trang có thể kết hợp selector để định vị phần tử chính xác. Xem @sec-matchSelector |
+| Mã JavaScript | Nội dung script để thực thi. Xem @sec-site-customization cho viết script |
+
+Test script trên trang test hoặc tài khoản test trước khi cấp quyền cho nhóm sản xuất. Lỗi script có thể làm trang không dùng được, nên mỗi script nên có tên rõ ràng và phạm vi khớp thực tế nhất có thể.
+
+## Kết hợp Cấu hình Khuyến nghị
+
+Bắt đầu với các kết hợp sau cho các tình huống khác nhau:
+
+| Tình huống | Cấu hình khuyến nghị |
+|---|---|
+| Truy cập chỉ đọc ERP/CRM nội bộ | Mã hóa URL, watermark hiển thị, giới hạn tải xuống, vô hiệu hóa copy, ẩn từ khóa nhạy cảm |
+| Nhà thầu truy cập backend khách hàng | Ẩn tên tài khoản, mã hóa URL, watermark hiển thị, watermark ẩn, kiểm soát xóa trang, ghi âm và phát lại |
+| Sử dụng đa tài khoản SaaS | Proxy cố định, múi giờ, thương hiệu trình duyệt, mô hình thiết bị di động, ẩn tên tài khoản |
+| Backend admin rủi ro cao | Danh sách chặn URL, kiểm soát xóa trang, giới hạn tải xuống, kiểm toán script |
+| Truy cập AI / MCP | Mã hóa URL, ẩn từ khóa nhạy cảm, chặn URL rủi ro cao, kiểm soát ẩn trang, cấp quyền nhóm tối thiểu |
+
+## Quy tắc URL Khớp {#sec-matchUrl}
+
+Khi giá trị là `*`, tất cả URL được khớp. Các quy tắc khác:
+
+1. Nếu bắt đầu bằng `regex:`, nội dung sau dùng làm biểu thức chính quy khớp URL, ví dụ `regex:https\:\/\/www.sa2web.com\/.+`.
+2. Nếu bắt đầu bằng `extract:`, URL khớp bằng sự bằng nhau chính xác, ví dụ `extract:https://www.sa2web.com`.
+3. Nếu bắt đầu bằng `script:`, biểu thức JavaScript dùng để khớp URL. Script có biến tên `url`; khi kết quả script là `true`, nó khớp. Ví dụ: `script:url.endsWith('pricing')`.
+4. Nếu không áp dụng các điều kiện trên, URL khớp bằng tiền tố, ví dụ `https://www.sa2web.com/my`.
+
+## Selector XPath/CSS {#sec-matchSelector}
+
+Selector XPath/CSS được nhắc đến trong hướng dẫn này là định dạng selector thống nhất được thiết kế để giảm tham số truyền. Nó mở rộng selector thông thường với các quy tắc sau:
+
+Định dạng:
+
+```text
+(xpath:)?<xpath/css selector><:p<number>>?
+```
+
+Nếu bắt đầu bằng `xpath:`, đó là quy tắc XPath. Ngược lại là CSS selector. Phần `:p<number>` tùy chọn nghĩa là tìm kiếm ngược từ phần tử mục tiêu theo số cấp tổ tiên đó.
+
+Ví dụ:
+
+```text
+// xpath selector
+xpath://body[contains(text(),sa2web)]:p1
+// css selector
+.article
+.article:p1
+```
+
+## Khuyến nghị Quy trình Cấu hình
+
+1. Xác nhận trang mục tiêu mở bình thường.
+2. Cấu hình cài đặt môi trường truy cập như proxy, múi giờ và mô phỏng trình duyệt.
+3. Bật chính sách hiển thị như mã hóa URL, watermark và ẩn tên tài khoản.
+4. Thêm từ khóa nhạy cảm, chặn URL, kiểm soát trang và script.
+5. Xác minh qua frontend với user test hoặc Agent test.
+6. Sau xác nhận, cấp quyền nhóm sản xuất.
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Trang mục tiêu hoặc trang nội bộ mở bình thường.
+- [ ] Proxy, múi giờ và mô phỏng trình duyệt khớp yêu cầu tài khoản kinh doanh.
+- [ ] Mã hóa URL, watermark và ẩn tên tài khoản hoạt động như kỳ vọng.
+- [ ] Hạn chế như vô hiệu hóa copy, in, chỉnh sửa không chặn luồng kinh doanh bắt buộc.
+- [ ] Từ khóa nhạy cảm và chặn URL khớp nội dung rủi ro cao.
+- [ ] Kiểm soát ẩn/xóa trang hoạt động trên trang mục tiêu.
+- [ ] Script chỉ có hiệu lực trên URL kỳ vọng.
+- [ ] Cấp quyền nhóm giới hạn cho user hoặc Agent cần nó.

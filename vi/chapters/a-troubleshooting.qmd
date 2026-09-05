@@ -1,0 +1,35 @@
+# Câu hỏi Thường gặp và Khắc phục Sự cố
+
+## Admin Console Không Mở
+
+```bash
+docker compose ps
+docker compose logs --tail 200
+```
+
+Kiểm tra domain, cổng 80/443, chứng chỉ và log ứng dụng.
+
+## User Không Thấy Trang SaaS
+
+Kiểm tra theo thứ tự: trạng thái trang -> nhóm user -> cấp quyền trang SaaS -> loại tài khoản.
+
+## User Không Thấy Workspace
+
+Kiểm tra cấp quyền workspace trong nhóm.
+
+## Trang Nội bộ Không Mở
+
+1. Trước tiên xác nhận URL mục tiêu có thể truy cập từ mạng nơi nút trình duyệt Sa2web đặt, sau đó kiểm tra DNS, định tuyến, tường lửa và ACL.
+2. Kiểm tra cấp quyền trang nội bộ trong nhóm.
+
+## MCP Không Kết Nối
+
+Kiểm tra Node.js, `@sa2web/mcp`, Playwright, `SA2_LOGIN_URL`, clientId/clientSecret, quyền Agent và HTTPS.
+
+## Passkey Thất Bại
+
+Kiểm tra domain mục tiêu, tin cậy HTTPS, origin trình duyệt, trạng thái gắn Passkey và tương thích trang mục tiêu trước.
+
+Tài liệu chính thức:
+
+- https://www.sa2web.com/docs/en/operations/troubleshooting

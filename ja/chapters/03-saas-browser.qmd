@@ -1,0 +1,89 @@
+# SaaSブラウジングの有効化
+
+## 目標
+
+固定のビジネスWebサイトをSaaSサイトとして設定し、従業員がSa2webユーザーフロントエンドから直接アクセスし、管理者がすでにログイン済みのリモートブラウザアカウントを再利用できるようにします。
+
+SaaSブラウジングは、複数の人が同じビジネスアカウントを共有する場合に適しています。管理者がバックエンドで最初にサイトにログインします。認可されたフロントエンドユーザーは、すでにログイン済みの状態でサイトにアクセスします。
+
+## サイトカテゴリの作成
+
+以下に移動：
+
+```text
+サイト管理 > サイトカテゴリ管理
+```
+
+業務領域別にカテゴリを作成します。例えば、越境ECプラットフォーム、カスタマーサービスシステム、データ分析、共通システムなど、@fig-site-categoryを参照。
+
+![Sa2webサイトカテゴリ管理](/images/site-category.png){#fig-site-category}
+
+## SaaSサイトの追加
+
+以下に移動：
+
+```text
+サイト管理 > サイト一覧
+```
+
+サイト追加時、@fig-add-siteに示すように入力：
+
+- サイト名。
+- 完全な `https://` URL。
+- カテゴリ。
+- ロゴ。
+- 説明。
+- ステータス。
+- アカウントカテゴリ。
+
+![Sa2web SaaSサイト追加](/images/add-site.png){#fig-add-site}
+
+サイト追加後、サイト一覧に表示されます。@fig-site-listを参照。
+
+![Sa2webサイト一覧](/images/site-list.png){#fig-site-list}
+
+## アカウントタイプとブラウザアカウントの作成
+
+以下に移動：
+
+```text
+サイト管理 > サイトブラウザアカウント
+```
+
+ターゲットサイトのブラウザアカウントを作成。保存後、一覧の "![](/images/login.png){width=20px}" ボタンをクリックすると、リモートブラウザがターゲットサイトを開きログインを完了します。@fig-site-browser-accountを参照。
+
+![Sa2webサイトブラウザアカウントログイン](/images/site-browser-account.png){#fig-site-browser-account}
+
+## グループ認可
+
+グループで以下のリソースを認可：
+
+- ユーザー。
+- SaaSサイト。
+
+グループでSaaSサイトを選択。@fig-group-privileges-siteを参照。
+
+![Sa2web SaaSサイトのグループ認可](/images/group-privileges-site.png){#fig-group-privileges-site}
+
+## ユーザーアクセス
+
+ユーザーは以下でログイン：
+
+```text
+https://<APP_DOMAIN>/app/login
+```
+
+ユーザーホームページで、@fig-user-access-saasに示すように認可されたサイトをクリックし、リモートブラウザに入ってSaaSサイトにアクセス。@fig-user-access-saas-siteを参照。
+
+![Sa2webユーザーセンター](/images/user-access-saas.png){#fig-user-access-saas}
+
+![Sa2webユーザーのSaaSサイトアクセス](/images/user-access-saas-site.png){#fig-user-access-saas-site}
+
+管理者がバックエンドでログインを完了済みのため、ユーザーはログイン済み状態でSaaSサイトに入ります。アカウント名は設定に従って自動的に非表示となり、フロントエンドユーザーは共有アカウント情報を見ません。
+
+## 受け入れチェックリスト
+
+- [ ] ユーザーフロントエンドで認可されたサイトを表示可能。
+- [ ] 認可されていないユーザーはサイトを見られない。
+- [ ] サイトをクリックするとリモートブラウザが開く。
+- [ ] 対応するブラウザアカウントがログイン状態のまま。

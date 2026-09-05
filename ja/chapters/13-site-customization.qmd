@@ -1,0 +1,132 @@
+# サイトのカスタマイズ {#sec-site-customization}
+
+## 目標
+
+上級サイト設定のスクリプト、またはサイトプラグインのスクリプトを使用して、サイト内のページ、データ、インターフェースを非表示、削除、書き換えします。
+
+## 1. 上級サイト設定
+
+以下に移動：
+
+```text
+サイト管理 > サイト一覧 > 設定
+```
+
+スクリプト関連の設定と用語には以下が含まれます：
+
+| 設定 | 目的 |
+|---|---|
+| リクエストヘッダー / レスポンスヘッダー | スクリプトが指定ヘッダーを読み取り可能にする |
+| ページスクリプト | スクリプトがページコンテンツ（DOM、フォーム、ボタン、リダイレクト、ページ拡張など）を操作する場合は `ページスクリプト` を選択 |
+| SSEスクリプト | スクリプトがサーバー送信イベントストリームを書き換える場合は `SSEスクリプト` を選択 |
+| 標準インターフェースインターセプション | 上記2つのオプションのどちらも選択しない場合、スクリプトは標準の非SSEインターフェースレスポンスボディを書き換え |
+
+## 2. スクリプトとプラグイン
+
+操作パス：
+
+1. サイト一覧で **プラグイン管理** をクリック。
+2. プラグインを作成。
+3. 名前、バージョン、備考、関連サイトを入力。
+4. プラグインをアップロードまたは設定入力。
+5. スクリプトを追加。
+6. 一致URL、スクリプトタイプ、セレクタ、コンテンツを設定。
+7. テストアカウントで検証。
+
+スクリプトはアカウントタイプ、ワークスペース、内部サイトでも使用可能。
+
+## 3. 機密ページコンテンツ制御
+
+以下に適しています：
+
+- 価格の非表示。
+- 顧客プライバシーフィールドの非表示。
+- 従業員が操作許可されていないボタンやエリアの削除。
+- 特定URLのページエリア非表示。
+- ページエリアの書き換え。
+
+セレクタはターゲットサイト変更後に無効になる可能性があるため、回帰テストが必要です。
+
+## ページスクリプトツール
+
+Webページ上で直接スクリプトを書いてテストするのは便利ではありません。GitHubから公式スクリプトエディタをダウンロード可能： https://github.com/sa2web/sa2web-script-editor.
+
+インストールファイルをダウンロードして展開後、`sa2web.exe` をクリックしてスクリプトエディタを起動。@fig-sa2web-script-editorを参照。
+
+![Sa2webスクリプトエディタ](/images/sa2web-script-editor.png){#fig-sa2web-script-editor}
+
+以下の2例で機能をデモ。
+
+## 例1：公式サイトヘッダー背景をコーラルに変更
+
+1. URLフィールドに `https://www.sa2web.com` を入力。
+2. `ページスクリプト` を選択。スクリプトがページコンテンツを操作することを意味。
+3. `CSS/XPathセレクタ` に `*` を入力。一致要素がページに現れたときに下記スクリプトが実行されることを意味。
+4. スクリプトボックスに以下のJavaScriptコードを入力。@fig-script-backgroundを参照：
+
+```JavaScript
+// ここにコードを記述...
+// ヘッダー要素がページに現れたときにイベントリスナー関数を実行。
+api.dom.addConnectListener("header", () => {
+  // ページ上のヘッダー要素を検索。
+  const header = api.dom.querySelector(document, "header");
+  // ヘッダー要素の背景色をlightcoralに変更。
+  header.style.backgroundColor = 'lightcoral';
+});
+```
+
+![Sa2web背景色スクリプト](/images/script-background.png){#fig-script-background}
+
+**スクリプト実行** をクリックしてスクリプトをテスト。左側のWebサイトが開きスクリプトが実行される。@fig-script-editor-run-scriptを参照。
+
+![Sa2webスクリプトテスト結果](/images/script-editor-run-script.png){#fig-script-editor-run-script}
+
+結果が期待通りになったら、上記内容をページにコピー。@fig-edit-script-on-pageを参照。
+
+![Sa2web上級サイト設定にスクリプト入力](/images/edit-script-on-page.png){#fig-edit-script-on-page}
+
+**追加** をクリック、次に **設定保存** をクリック。ユーザーがフロントエンドからログインしてサイトにアクセスすると、ナビゲーションバーがコーラルになる。@fig-official-change-backgroundを参照。
+
+![Sa2webフロントエンドアクセス結果](/images/official-change-background.png){#fig-official-change-background}
+
+## 例2：公式サイト中央にページビューを表示
+
+この例では主に `api.user` を使用してデータを保存・表示し、データベースに永続的に保存。ここでは公式サイトページにページビューカウンターを表示する。@fig-script-add-page-countを参照。
+
+```JavaScript
+api.dom.addConnectListener('body', async (con) => {
+  if (window != window.top) return;
+  if (window.isCounted) {
+    return;
+  }
+  window.isCounted = true;
+  // 現在のサイトのみでページビューをカウント。
+  await api.user.incr('counter', 1, true, false, false);
+  // 現在のサイトのみでページビューを取得。
+  const ret = await api.user.get('counter', true, false, false);
+  document.body.insertAdjacentHTML('beforeend', `<div style='position: fixed;background-color:red;color:white;left:50%;top:50%;width:100px;height:100px;line-height:100px;text-align:center;font-size:50px'>
+  ${ret.value}</div>`);
+});
+```
+
+![Sa2webページビューカウンタースクリプト追加](/images/script-add-page-count.png){#fig-script-add-page-count}
+
+**追加** と **保存** クリックから約1分後、Sa2webフロントエンドからサイトにアクセス。ページ中央に赤いボックスが現れ、ページビューカウントを表示。各訪問またはリフレッシュでカウントが1増加。@fig-script-page-countを参照。
+
+![Sa2webページカウンター効果](/images/script-page-count.png){#fig-script-page-count}
+
+もちろん、`api.user` にはこれ以外にも多くのAPIがあります。アカウント別、デバイス別でのデータ保存・取得も可能。完全なAPIは @sec-script-api を参照。
+
+これら2例は最も基本的なサイトカスタマイズ機能の一部をデモしているに過ぎません。`api.http` などの他のAPIを通じてエンタープライズシステムと深く統合し、より良い体験を提供することも可能です。
+
+## 4. `window.api`
+
+ページスクリプトと標準インターフェースインターセプションスクリプトは以下を使用可能：
+
+```ts
+window.api
+```
+
+主に `user`、`dom`、`utils`、`config`、`header()` に関連するAPIを含みます。
+
+完全なインターフェースについては @sec-script-api を参照。

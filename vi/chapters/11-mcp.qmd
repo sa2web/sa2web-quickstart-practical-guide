@@ -1,0 +1,135 @@
+# Bật Truy cập Sa2web MCP
+
+## Mục tiêu
+
+Cho phép AI client có khả năng MCP như Codex, Claude Code và Cursor đọc và vận hành trình duyệt từ xa Sa2web.
+
+## Chuẩn bị
+
+- Node.js 20+.
+- Cài đặt `@sa2web/mcp`.
+- Chuẩn bị URL đăng nhập agent.
+- Tài khoản agent có quyền SaaS, workspace, trang nội bộ và proxy cần thiết.
+
+`clientId` và `clientSecret` trong URL đăng nhập agent phải được coi là bí mật.
+
+## Cài đặt
+
+```bash
+npm install @sa2web/mcp -g
+npx playwright install --with-deps
+```
+
+Sau cài đặt, các lệnh sau có sẵn:
+
+```text
+sa2
+sa2-browser
+sa2-mcp
+```
+
+## Tạo User Agent
+
+Đi đến:
+
+```text
+Quản lý User > Danh sách Agent
+```
+
+Thêm user Agent mới, ví dụ `mcp-agent`, và lưu, như hình @fig-add-agent.
+
+![Sa2web add Agent user](/images/add-agent.png){#fig-add-agent}
+
+Mật khẩu mặc định ở đây dùng cho đăng nhập frontend thủ công tại `https://<APP_DOMAIN>/app/login`. Bạn có thể đổi mật khẩu này bằng cách tìm user Agent trong danh sách user, hoặc bằng cách đăng nhập frontend và đổi ở đó. Tên user Agent mặc định bắt đầu bằng `a`.
+
+Sau khi thêm user, bạn có thể thấy nó trong danh sách user Agent, như hình @fig-agent-list.
+
+![Sa2web Agent user list](/images/agent-list.png){#fig-agent-list}
+
+Sau đó copy `clientId` và `clientSecret` của user Agent để cấu hình MCP client. Bạn cũng có thể nhấn nút "![](/images/copy-agent-url.png){width=90px}" để copy URL đăng nhập. URL trông như sau:
+
+```text
+https://192.168.1.105/agent/login?clientId=6d0593b03fa748aa8dee7452ef6221c8&clientSecret=d985786d946e4826aadd07d579c59b06bf41a32aff4a415f8981070915d940a9
+```
+
+Nó đã chứa `clientId` và `clientSecret`, nên có thể dùng trực tiếp trong cấu hình MCP client.
+
+## Cấp quyền User Agent
+
+Đi đến:
+
+```text
+Quản lý User > Danh sách nhóm
+```
+
+Trên trang danh sách nhóm, tạo nhóm mới, ví dụ `agent`, như hình @fig-agent-group. Nhấn **User**, thêm user Agent như `mcp-agent` vào nhóm và lưu. Sau đó cấp quyền SaaS, workspace, trang nội bộ, proxy và các quyền khác cần thiết cho nhóm.
+
+![Sa2web Agent group](/images/agent-group.png){#fig-agent-group}
+
+Mở URL đăng nhập Agent trong trình duyệt mới, ví dụ `https://192.168.1.105/agent/login?clientId=6d0593b03fa748aa8dee7452ef6221c8&clientSecret=d985786d946e4826aadd07d579c59b06bf41a32aff4a415f8981070915d940a9`. Nó chuyển hướng đến trang chủ Sa2web, như hình @fig-agent-auto-login. Xác nhận nội dung được cấp quyền của Agent chính xác.
+
+![Sa2web Agent auto-login page](/images/agent-auto-login.png){#fig-agent-auto-login}
+
+## Cấu hình MCP Client
+
+Viết cấu hình theo định dạng yêu cầu bởi AI agent client bạn dùng. Ví dụ:
+
+```json
+{
+  "mcpServers": {
+    "sa2-remote-browser": {
+      "command": "sa2-mcp",
+      "env": {
+        "SA2_LOGIN_URL": "https://<APP_DOMAIN>/agent/login?clientId=...&clientSecret=...",
+        "SA2_LOGIN_REDIRECT_PATH": "/app/login",
+        "SA2_HEADLESS": "false",
+        "SA2_IGNORE_HTTPS_ERRORS": "true"
+      }
+    }
+  }
+}
+```
+
+Ví dụ sau dùng Codex desktop để demo cách thêm Sa2web MCP. Nhấn menu `settings` trong Codex, mở màn hình cài đặt, như hình @fig-codex-add-mcp, tìm `Plugins`, mở trang Plugins và nhấn **Add MCP Server**.
+
+![Add Sa2web MCP in Codex](/images/codex-add-mcp.png){#fig-codex-add-mcp}
+
+Tiếp theo, thử MCP này. Nhập prompt sau để dùng Sa2web MCP duyệt trang workspace và thu thập nội dung:
+
+```text
+Open the workspace 'demo2' using sa2-remote-browser, collect the main content of the page, and summarize it.
+```
+
+Sau khi gửi tin nhắn, Codex dùng `sa2-remote-browser` truy cập trang mục tiêu Sa2web và thu thập nội dung, như hình @fig-mcp-demo.
+
+![Sa2web MCP demo result in Codex](/images/mcp-demo.png){#fig-mcp-demo}
+
+::: {.callout-warning}
+Đừng commit giá trị `clientSecret` thật vào kho Git công khai, ảnh chụp màn hình hoặc ticket công khai.
+:::
+
+## Quyền hạn AI
+
+Tài khoản AI vẫn được kiểm soát bởi hệ thống quyền hạn Sa2web. Chỉ cấp những gì cần thiết:
+
+- Trang SaaS.
+- Workspace.
+- Trang nội bộ.
+- Truy cập mạng/proxy.
+- Quyền hạn cần thiết khác.
+
+Tài liệu chính thức nói trang mục tiêu nằm trong `iframe#rbi-frame`; MCP Server điều khiển iframe đó qua Playwright và agent không truy cập trực tiếp trang web mục tiêu.
+
+::: {.callout-warning}
+Để giảm rủi ro AI lộ bí mật thương mại hoặc dữ liệu riêng tư, hãy bật bảo vệ URL đích cho trang ở backend trước, và ẩn hoặc chặn thông tin tài khoản SaaS, URL bí mật công ty và từ khóa nhạy cảm.
+:::
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] `sa2-mcp` có trong `PATH`.
+- [ ] MCP client có thể khởi động nó.
+- [ ] AI chỉ thấy tài nguyên được cấp quyền, và bí mật công ty hoặc thông tin phải ẩn được ẩn.
+
+Tham khảo:
+
+- https://www.sa2web.com/docs/en/appendix/mcp

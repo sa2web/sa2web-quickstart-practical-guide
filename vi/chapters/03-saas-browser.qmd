@@ -1,0 +1,89 @@
+# Bật SaaS Browser (Trình duyệt SaaS)
+
+## Mục tiêu
+
+Cấu hình trang web kinh doanh cố định làm trang SaaS để nhân viên có thể truy cập trực tiếp từ frontend người dùng Sa2web và tái sử dụng tài khoản trình duyệt từ xa mà quản trị viên đã đăng nhập trước.
+
+SaaS Browser phù hợp khi nhiều người chia sẻ cùng tài khoản kinh doanh. Quản trị viên đăng nhập trang ở backend trước. User frontend được cấp quyền sau đó truy cập trang ở trạng thái đã đăng nhập.
+
+## Tạo Danh mục Trang (Site Category)
+
+Đi đến:
+
+```text
+Quản lý trang > Quản lý danh mục trang
+```
+
+Tạo danh mục theo lĩnh vực kinh doanh, ví dụ nền tảng thương mại ngoại hối, hệ thống dịch vụ khách hàng, phân tích dữ liệu và hệ thống chung, như hình @fig-site-category.
+
+![Sa2web site category management](/images/site-category.png){#fig-site-category}
+
+## Thêm Trang SaaS
+
+Đi đến:
+
+```text
+Quản lý trang > Danh sách trang
+```
+
+Khi thêm trang, như hình @fig-add-site, điền:
+
+- Tên trang.
+- URL đầy đủ `https://`.
+- Danh mục.
+- Logo.
+- Mô tả.
+- Trạng thái.
+- Danh mục tài khoản.
+
+![Sa2web add SaaS site](/images/add-site.png){#fig-add-site}
+
+Sau khi thêm trang, trang xuất hiện trong danh sách trang, như hình @fig-site-list.
+
+![Sa2web site list](/images/site-list.png){#fig-site-list}
+
+## Tạo Loại tài khoản và Tài khoản trình duyệt trang
+
+Đi đến:
+
+```text
+Quản lý trang > Tài khoản trình duyệt trang
+```
+
+Tạo tài khoản trình duyệt cho trang mục tiêu. Sau khi lưu, nhấn nút "![](/images/login.png){width=20px}" trong danh sách để trình duyệt từ xa mở trang mục tiêu và hoàn tất đăng nhập, như hình @fig-site-browser-account.
+
+![Sa2web site browser account login](/images/site-browser-account.png){#fig-site-browser-account}
+
+## Cấp quyền Nhóm
+
+Cấp quyền các tài nguyên sau trong nhóm:
+
+- User.
+- Trang SaaS.
+
+Chọn trang SaaS trong nhóm, như hình @fig-group-privileges-site.
+
+![Sa2web group authorization for SaaS sites](/images/group-privileges-site.png){#fig-group-privileges-site}
+
+## Truy cập User
+
+User đăng nhập tại:
+
+```text
+https://<APP_DOMAIN>/app/login
+```
+
+Trên trang chủ user, như hình @fig-user-access-saas, nhấn trang được cấp quyền để vào trình duyệt từ xa và truy cập trang SaaS, như hình @fig-user-access-saas-site.
+
+![Sa2web user center](/images/user-access-saas.png){#fig-user-access-saas}
+
+![Sa2web user access to a SaaS site](/images/user-access-saas-site.png){#fig-user-access-saas-site}
+
+Vì quản trị viên đã hoàn tất đăng nhập ở backend, user vào trang SaaS ở trạng thái đã đăng nhập. Tên tài khoản tự động được ẩn theo cấu hình để user frontend không thấy thông tin tài khoản chung.
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Frontend user có thể hiển thị trang được cấp quyền.
+- [ ] User không được cấp quyền không thấy trang.
+- [ ] Nhấn trang mở trình duyệt từ xa.
+- [ ] Tài khoản trình duyệt tương ứng vẫn ở trạng thái đăng nhập.

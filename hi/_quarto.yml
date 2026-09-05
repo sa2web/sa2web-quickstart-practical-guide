@@ -1,0 +1,93 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  title: "Sa2web त्वरित आरंभ और व्यावहारिक मार्गदर्शिका"
+  subtitle: "निजी परिनियोजन से टीम सहयोग तक, अपना एंटरप्राइज रिमोट ब्राउज़र वातावरण बनाएं"
+  author: "Alex Mercer"
+  date: today
+  cover-image: images/cover.png
+  favicon: images/favicon.svg
+  site-url: "https://www.sa2web.com/"
+  search: true
+  page-navigation: true
+  chapters:
+    - index.qmd
+    - part: "भाग 1 | Sa2web के साथ शुरुआत"
+      chapters:
+        - chapters/01-install-deploy.qmd
+        - chapters/02-cloud-browser.qmd
+        - chapters/03-saas-browser.qmd
+        - chapters/04-collaboration.qmd
+        - chapters/05-multi-account.qmd
+        - chapters/06-inner-sites.qmd
+        - chapters/07-users-permissions.qmd
+    - part: "भाग 2 | उन्नत Sa2web"
+      chapters:
+        - chapters/08-target-url-protection.qmd
+        - chapters/09-watermark.qmd
+        - chapters/10-record-replay.qmd
+        - chapters/11-mcp.qmd
+        - chapters/12-sites-inner-sites-config.qmd
+        - chapters/13-site-customization.qmd
+    - part: "भाग 3 | परिशिष्ट"
+      chapters:
+        - chapters/14-script-api.qmd
+        - chapters/15-passkey.qmd
+        - chapters/a-troubleshooting.qmd
+        - chapters/b-glossary.qmd
+
+format:
+  html:
+    theme:
+      light: [cosmo, styles/sa2web.scss]
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    code-copy: true
+    code-overflow: wrap
+    link-external-newwindow: true
+    smooth-scroll: true
+  pdf:
+    documentclass: scrbook
+    pdf-engine: xelatex
+    include-in-header: styles/preamble.tex
+    toc: true
+    number-sections: true
+    #fig-pos: 'H'
+    header-includes: |
+      \usepackage{graphicx}
+      \usepackage{eso-pic}
+      
+      % Add a full-page cover image at the start of the document.
+      \AtBeginDocument{
+        \thispagestyle{empty} % Hide page number/header on the first page.
+        \AddToShipoutPictureBG*{%
+          \AtPageLowerLeft{%
+            \includegraphics[width=\paperwidth, height=\paperheight]{images/cover.pdf}%
+          }%
+        }
+        \null\newpage % Force a first blank page for the cover, then continue to the body/title page.
+      }
+    geometry:
+      - top=22mm
+      - bottom=24mm
+      - left=22mm
+      - right=22mm
+  docx:
+    toc: true
+    number-sections: true
+    filters:
+      - filters/docx-layout.lua
+  epub:
+    toc: true
+    number-sections: true
+    css: styles/epub.css
+
+lang: hi
+crossref:
+  fig-title: "चित्र"
+  tbl-title: "तालिका"
+execute:
+  freeze: auto

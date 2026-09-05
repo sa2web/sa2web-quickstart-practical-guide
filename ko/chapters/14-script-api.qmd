@@ -1,0 +1,729 @@
+# 스크립트 API 사용 {#sec-script-api}
+
+## 목표
+
+Sa2web 페이지 스크립트와 표준 인터페이스 인터셉션 스크립트에서 사용 가능한 `window.api` 기능 설명. 사이트 구성, 내부 사이트 구성, 계정 구성, 플러그인 스크립트의 스크립트를 더 안정적으로 작성할 수 있도록.
+
+스크립트 API는 다섯 가지 주요 카테고리:
+
+| API | 목적 |
+|---|---|
+| `api.config` | 커스텀 구성 읽기; 현재 협업 링크 하에서만 유효 |
+| `api.http` | 페이지 CORS 제한 우회하며 HTTP 요청 전송 |
+| `api.user` | 사용자, 사이트, 계정, 기기별로 범위 지정된 데이터 읽기/쓰기 |
+| `api.dom` | DOM 쿼리, 가시성 확인, 요소 변경 감지, 오버레이 생성 |
+| `api.utils` | 조건 대기 및 페이지에서 자바스크립트 실행 |
+| `api.header()` | 기록된 요청 또는 응답 헤더 읽기 |
+
+페이지 스크립트와 표준 인터페이스 인터셉션 스크립트는 `window.api` 사용 가능. SSE 스크립트는 `data` 전달만 보장되고 보통 `window.api` 의존 안 함.
+
+## 전체 구조
+
+스크립트에서 `api` 직접 사용하거나 `window.api` 통해 접근 가능:
+
+```ts
+interface Window {
+  api: {
+    user: UserApi;
+    config: Record<string, unknown>;
+    http: HttpApi;
+    dom: DomApi;
+    utils: UtilsApi;
+    header(headerName: string, isRequestHeader: boolean): Promise<string | string[] | undefined>;
+  };
+}
+```
+
+예시:
+
+```js
+const apiBase = api.config.apiBase;
+const userToken = await api.user.get('token');
+const submit = api.dom.querySelector(document, 'button[type="submit"]');
+const profile = await api.http.ajax({ url: `http://192.168.1.111:8080/profile` });
+```
+
+::: {.callout-tip}
+스크립트에서 Sa2web의 `api.dom` 쿼리 도구 권장. CSS 셀렉터와 XPath 셀렉터 모두 지원하여 복잡한 비즈니스 페이지에서 `document.querySelector()` 단독보다 더 적합.
+:::
+
+## `api.config`
+
+`api.config`는 사이트 스크립트 환경에서 커스텀 구성 읽기.
+
+```ts
+config: Record<string, unknown>
+```
+
+예시:
+
+```js
+const apiBase = api.config.apiBase;
+const featureEnabled = api.config.featureEnabled === true;
+```
+
+## `api.http`
+
+`api.http`는 사용자 스크립트용 HTTP 요청 도구 제공. `api.http.ajax`는 브라우저 메인 프로세스에서 실제 요청 실행하므로 페이지 CORS 정책 제한 받지 않음.
+
+### `api.http.ajax(options)`
+
+HTTP 요청 전송.
+
+```ts
+ajax(options: {
+  url: string;
+  method?: string;
+  data?: any;
+  headers?: Record<string, string>;
+  timeout?: number;
+  dataType?: 'json' | 'text' | 'html' | 'arrayBuffer';
+  contentType?: string;
+  processData?: boolean;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data?: any;
+  error?: string;
+  timeout?: boolean;
+}>
+```
+
+매개변수:
+
+| 옵션 | 타입 | 기본값 | 설명 |
+|---|---|---|---|
+| `url` | `string` | - | 요청 URL. |
+| `method` | `string` | `GET` | HTTP 메서드. |
+| `data` | `any` | - | 요청 데이터. `GET`과 `HEAD` 요청은 쿼리 문자열로 직렬화; 다른 메서드는 요청 본문에 작성. |
+| `headers` | `Record<string, string>` | `{}` | 요청 헤더. |
+| `timeout` | `number` | - | 밀리초 단위 타임아웃. `0` 초과일 때만 효과. |
+| `dataType` | `'json' \| 'text' \| 'html' \| 'arrayBuffer'` | `json` | 응답 파싱 모드. |
+| `contentType` | `string` | `application/x-www-form-urlencoded; charset=UTF-8` | 요청 본문 Content-Type. |
+| `processData` | `boolean` | `true` | `data` 자동 직렬화 여부. `false`면 `data` 직접 요청 본문으로 전달. |
+
+반환 값:
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `ok` | `boolean` | HTTP 2xx 응답 시 `true`; 파싱 에러, HTTP 에러, 타임아웃, 중단, 네트워크 에러 시 `false`. |
+| `status` | `number` | HTTP 상태 코드. `0`은 타임아웃, 중단, 네트워크 레이어 실패. |
+| `statusText` | `string` | HTTP 상태 텍스트. 비HTTP 실패 시 `timeout`, `abort`, `error`. |
+| `data` | `any` | 파싱된 응답 데이터. |
+| `error` | `string` | 파싱 실패 또는 비HTTP 실패 에러 메시지. |
+| `timeout` | `boolean` | 설정된 타임아웃으로 요청 중단 시 `true`. |
+
+GET 요청 예시:
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/profile',
+  method: 'GET',
+  dataType: 'json',
+  timeout: 10000
+});
+
+if (ret.ok) {
+  console.log(ret.data);
+}
+```
+
+POST 요청 예시:
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/items',
+  method: 'POST',
+  contentType: 'application/json',
+  data: { name: 'demo' }
+});
+
+if (!ret.ok) {
+  console.warn(ret.status, ret.error || ret.statusText);
+}
+```
+
+## `api.user`
+
+`api.user`는 스크립트 실행 중 사용자 관련 데이터 읽기/쓰기. 다른 차원에서 스토리지 범위 격리 가능.
+
+공통 매개변수:
+
+| 매개변수 | 타입 | 기본값 | 설명 |
+|---|---|---|---|
+| `site` | `boolean` | `false` | 사이트별 격리 여부 |
+| `account` | `boolean` | `false` | 사이트 계정 또는 워크스페이스 이름별 격리 여부 |
+| `did` | `boolean` | `false` | 기기별 격리 여부 |
+
+차원 권장사항:
+
+| 시나리오 | 권장사항 |
+|---|---|
+| 같은 사용자 데이터 사이트 간 공유 | `site=false` |
+| 각 사이트별 독립적 데이터 저장 | `site=true` |
+| 같은 사이트 하 다른 계정 격리 | `account=true` |
+| 같은 사용자 다른 기기에서 격리 | `did=true` |
+
+### `api.user.put()`
+
+키-값 쌍 저장.
+
+```ts
+put(
+  name: string,
+  value: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+예시:
+
+```js
+await api.user.put('token', 'abc123');
+await api.user.put('draft:lastOrderId', 'A-1001', true, true);
+```
+
+### `api.user.get()`
+
+지정된 키 읽기.
+
+```ts
+get(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ value: string | null, status: boolean }>
+```
+
+예시:
+
+```js
+const ret = await api.user.get('token');
+if (ret.status && ret.value) {
+  console.log(ret.value);
+}
+```
+
+### `api.user.remove()`
+
+지정된 키 삭제.
+
+```ts
+remove(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+예시:
+
+```js
+await api.user.remove('token');
+await api.user.remove('draft:lastOrderId', true, true);
+```
+
+### `api.user.incr()`
+
+지정된 키의 숫자 값을 단계만큼 증가. 키 없으면 생성.
+
+```ts
+incr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+예시:
+
+```js
+const ret = await api.user.incr('submitCount', 1, true);
+console.log(ret.value);
+```
+
+### `api.user.decr()`
+
+지정된 키의 숫자 값을 단계만큼 감소. 키 없으면 음수 초기값으로 생성.
+
+```ts
+decr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+예시:
+
+```js
+const ret = await api.user.decr('remainingQuota', 1, true, true);
+console.log(ret.value);
+```
+
+### `api.user.startsWith()`
+
+키 이름 접두사로 데이터 찾기.
+
+```ts
+startsWith(
+  prefix: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<Array<{ name: string, value: string }>>
+```
+
+예시:
+
+```js
+const items = await api.user.startsWith('cache:', true);
+for (const item of items) {
+  console.log(item.name, item.value);
+}
+```
+
+### `api.user.countAll()`
+
+지정된 키 이름의 레코드 수 세기.
+
+```ts
+countAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+예시:
+
+```js
+const ret = await api.user.countAll('token', true);
+console.log(ret.value);
+```
+
+### `api.user.sumAll()`
+
+지정된 키 이름의 값 숫자 합 계산.
+
+```ts
+sumAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+예시:
+
+```js
+const ret = await api.user.sumAll('score', true);
+console.log(ret.value);
+```
+
+## `api.dom`
+
+`api.dom`은 DOM 쿼리, 가시성 확인, 연결 리스너, 리사이즈 리스너, 오버레이 생성 제공.
+
+셀렉터 지원:
+
+| 구문 | 설명 |
+|---|---|
+| `.button.primary` | CSS 셀렉터 |
+| `xpath://div[@id="app"]` | XPath 셀렉터 |
+| `.dialog:p` | 일치 요소의 부모 요소 반환 |
+| `.dialog:p2` | 일치 요소에서 두 레벨 위 조상 반환 |
+| `.header:bottom` | 오버레이 경계 메서드에서 요소의 하단 경계 사용 |
+| `.sidebar:right` | 오버레이 경계 메서드에서 요소의 오른쪽 경계 사용 |
+
+@sec-matchSelector 참조.
+
+### `api.dom.createMutationObserver()`
+
+`MutationObserver` 생성 및 캐시. 같은 바인딩 이름의 옵저버가 대상 요소에 이미 있으면 기존 옵저버 직접 반환.
+
+```ts
+createMutationObserver(
+  ele: Element,
+  bindStr: string,
+  childList: boolean,
+  subtree: boolean,
+  attributes: boolean,
+  characterData: boolean,
+  fn: (mutations: MutationRecord[]) => void
+): MutationObserver
+```
+
+예시:
+
+```js
+api.dom.createMutationObserver(
+  document.body,
+  '__bodyObserver__',
+  true,
+  true,
+  false,
+  false,
+  (mutations) => console.log(mutations)
+);
+```
+
+### `api.dom.querySelector()`
+
+첫 번째 일치 요소 쿼리.
+
+```ts
+querySelector(doc: Document, cssOrXPathSelector: string): HTMLElement | null
+```
+
+예시:
+
+```js
+const el = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+```
+
+### `api.dom.querySelectorAll()`
+
+모든 일치 요소 쿼리.
+
+```ts
+querySelectorAll(doc: Document, cssOrXPathSelector: string): HTMLElement[]
+```
+
+예시:
+
+```js
+const buttons = api.dom.querySelectorAll(document, 'button.primary');
+buttons.forEach((button) => console.log(button.textContent));
+```
+
+### `api.dom.isVisible()`
+
+요소가 가시적 교차 영역에 있는지 확인.
+
+```ts
+isVisible(ele: HTMLElement): Promise<boolean>
+```
+
+예시:
+
+```js
+const el = api.dom.querySelector(document, '.submit');
+if (el && await api.dom.isVisible(el)) {
+  console.log('visible');
+}
+```
+
+### `api.dom.getVisibleRect()`
+
+요소의 현재 가시적 사각형 가져오기.
+
+```ts
+getVisibleRect(ele: HTMLElement): Promise<DOMRectReadOnly>
+```
+
+예시:
+
+```js
+const el = api.dom.querySelector(document, '.panel');
+if (el) {
+  const rect = await api.dom.getVisibleRect(el);
+  console.log(rect.left, rect.top, rect.width, rect.height);
+}
+```
+
+### `api.dom.getConnectListeners()`
+
+현재 연결 리스너 리스트 가져오기.
+
+```ts
+getConnectListeners(): Array<{
+  querySelector: string;
+  callback: (isConnected: boolean) => void;
+  isConnected?: boolean;
+}>
+```
+
+예시:
+
+```js
+api.dom.addConnectListener('.modal', () => {});
+console.log(api.dom.getConnectListeners());
+```
+
+### `api.dom.addConnectListener()`
+
+요소가 문서에 나타나거나 사라지는 것 감지.
+
+```ts
+addConnectListener(
+  cssOrXPathSelector: string,
+  callback: (isConnected: boolean) => void
+): void
+```
+
+예시:
+
+```js
+api.dom.addConnectListener('.dialog', (isConnected) => {
+  console.log('dialog:', isConnected);
+});
+```
+
+### `api.dom.removeConnectListener()`
+
+지정된 셀렉터의 연결 리스너 제거.
+
+```ts
+removeConnectListener(cssOrXPathSelectors: string[]): void
+```
+
+예시:
+
+```js
+api.dom.removeConnectListener(['.dialog', '.toast']);
+```
+
+### `api.dom.addResizeListener()`
+
+대상 요소의 크기 및 위치 변경 감지. 요소 없으면 콜백이 빈 사각형 수신.
+
+```ts
+addResizeListener(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  callback: (rect: DOMRect) => void,
+  createObserver?: boolean,
+  delayTime?: number
+): ResizeObserver | (() => void)
+```
+
+예시:
+
+```js
+api.dom.addResizeListener('.target', '__targetResize__', (rect) => {
+  console.log(rect.width, rect.height);
+});
+```
+
+### `api.dom.createOverlayBy()`
+
+대상 요소의 가시 영역 따르는 고정 위치 오버레이 생성.
+
+```ts
+createOverlayBy(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  createObserver?: boolean,
+  delayTime?: number,
+  fn?: (rect: DOMRectReadOnly) => void
+): HTMLElement
+```
+
+예시:
+
+```js
+const overlay = api.dom.createOverlayBy('.target', '__overlay__');
+overlay.style.border = '2px solid #f00';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+### `api.dom.createOverlayByBorder()`
+
+상단, 우측, 하단, 좌측 경계에서 고정 위치 오버레이 생성. 경계 값은 픽셀 숫자나 셀렉터 가능.
+
+```ts
+createOverlayByBorder(
+  bindWindowStr: string,
+  top: string | number,
+  right: string | number,
+  bottom: string | number,
+  left: string | number,
+  createObserver?: boolean,
+  delayTime?: number
+): HTMLElement
+```
+
+예시:
+
+```js
+const panel = api.dom.createOverlayByBorder(
+  '__centerPanel__',
+  'header:bottom',
+  20,
+  'footer:top',
+  '.sidebar:right'
+);
+panel.style.background = 'rgba(0,0,0,.08)';
+```
+
+## `api.utils`
+
+`api.utils`는 페이지 조건 대기 및 페이지 컨텍스트에서 코드 실행을 위한 공통 헬퍼 기능 제공.
+
+### `api.utils.wait()`
+
+조건 함수가 truthy 값 반환할 때까지 폴링. 타임아웃 시 에러 발생.
+
+```ts
+wait(
+  fn: () => boolean,
+  timeoutMs: number,
+  intervalMs?: number
+): Promise<void>
+```
+
+예시:
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.ready'),
+  10000,
+  200
+);
+```
+
+### `api.utils.runScript()`
+
+현재 페이지에서 자바스크립트 코드 실행하고 결과 반환.
+
+```ts
+runScript(
+  code: string,
+  callback?: (result: any, error: Error) => void
+): Promise<any>
+```
+
+예시:
+
+```js
+const title = await api.utils.runScript('document.title');
+console.log(title);
+```
+
+콜백 형태:
+
+```js
+await api.utils.runScript('document.body.innerText.slice(0, 100)', (result, error) => {
+  if (error) {
+    console.error(error);
+    return;
+  }
+  console.log(result);
+});
+```
+
+## `api.header()`
+
+`api.header(headerName, isRequestHeader)`는 리모트 브라우저에서 기록된 요청 또는 응답 헤더 읽기.
+
+```ts
+header(
+  headerName: string,
+  isRequestHeader: boolean
+): Promise<string | string[] | undefined>
+```
+
+매개변수:
+
+| 매개변수 | 타입 | 설명 |
+|---|---|---|
+| `headerName` | `string` | 요청 또는 응답 헤더 이름. 읽을 때 소문자 변환 |
+| `isRequestHeader` | `boolean` | `true` 요청 헤더 읽기; `false` 응답 헤더 읽기 |
+
+예시:
+
+```js
+const cookie = await api.header('cookie', true);
+const setCookie = await api.header('set-cookie', false);
+```
+
+주의사항:
+
+- 사이트 구성에서 추가된 요청 또는 응답 헤더만 기록됨.
+- 요청 헤더는 리모트 브라우저가 보낸 요청에서 옴.
+- 응답 헤더는 리모트 브라우저가 받은 응답에서 옴.
+- 응답 헤더는 문자열 배열 반환 가능.
+
+## 일반적인 스크립트 조합
+
+### 요소 대기 후 클릭
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.login-button'),
+  10000,
+  200
+);
+
+const button = api.dom.querySelector(document, '.login-button');
+button?.click();
+```
+
+### XPath로 영어 버튼 찾기
+
+```js
+const submit = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+
+if (submit && await api.dom.isVisible(submit)) {
+  submit.click();
+}
+```
+
+### 페이지 상태 저장
+
+```js
+const count = await api.user.incr('visitCount', 1, true, true);
+await api.user.put('lastTitle', document.title, true, true);
+
+console.log(count.value);
+```
+
+### 관심 영역에 오버레이 추가
+
+```js
+const overlay = api.dom.createOverlayBy('.customer-phone', '__phoneMask__');
+overlay.style.background = '#fff';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+## 사용 원칙
+
+스크립트를 비즈니스 코드처럼 관리:
+
+- 일치 URL 제한하여 스크립트가 무관한 페이지에서 실행되지 않게 함.
+- 롤백과 문제 해결 위해 스크립트에 명확한 이름 부여.
+- 먼저 테스트 사이트나 테스트 계정에서 검증.
+- DOM 셀렉터 의존 스크립트 회귀 테스트.
+- 저장 데이터에 명확한 접두사 사용, 예: `cache:`, `draft:`, `state:`.
+- 시크릿, 장수 토큰, 계정 비밀번호를 스크립트에 하드코딩하지 않음.
+- 스크립트 변경 이유 기록하고 필요 시 코드 리뷰 수행.
+
+## 문제 해결 체크리스트
+
+| 문제 | 확인 사항 |
+|---|---|
+| `api` 없음 | 스크립트 유형이 `window.api` 지원하는지 확인; SSE 스크립트는 이것 의존하지 않아야 함 |
+| 요소 못 찾음 | URL 일치하는지, 페이지 로딩 완료됐는지, 셀렉터 변경됐는지 확인 |
+| XPath 안 됨 | `xpath://` 접두사 사용되는지 확인 |
+| 헤더 못 읽음 | 해당 요청 또는 응답 헤더 이름을 사이트 구성에 먼저 추가 |
+| 사용자 데이터 범위 간 혼합 | `site`, `account`, `did` 차원 매개변수 확인 |
+| 오버레이 위치 비정상 | 대상 요소 가시적인지, 경계 셀렉터 올바른지 확인 |
+| 스크립트 다른 페이지 영향 | 일치 URL 좁히거나 스크립트 처음에 페이지 조건 체크 추가 |

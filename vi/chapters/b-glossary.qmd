@@ -1,0 +1,18 @@
+# Từ điển Thuật ngữ
+
+| Thuật ngữ | Ý nghĩa |
+|---|---|
+| Browser Runtime (Môi trường chạy trình duyệt) | Môi trường chạy trình duyệt thực thi JavaScript trang, cookie, phiên và yêu cầu mạng |
+| Machine (Máy) | Nút chứa môi trường chạy trình duyệt từ xa |
+| Browser (Trình duyệt) | Thể hiện trình duyệt Sa2web |
+| SaaS Site (Trang SaaS) | Trang kinh doanh bên ngoài được truy cập từ frontend user |
+| Inner Site (Trang nội bộ) | Điểm truy cập vào hệ thống kinh doanh nội bộ doanh nghiệp |
+| Workspace (Không gian làm việc) | Điểm truy cập kinh doanh cố định tài khoản trang, môi trường trình duyệt và cấu hình |
+| Group (Nhóm) | Đơn vị cấp quyền kết hợp user, trang, workspace, quyền hạn và mạng theo lô |
+| Collaboration Link (Liên kết cộng tác) | Liên kết truy cập được kiểm soát cho user cộng tác hoặc tạm thời |
+| Encrypted URL (Mã hóa URL) | Khả năng ẩn địa chỉ gốc hiển thị trong frontend user |
+| Replay (Phát lại) | Ghi âm và phát lại truy cập duyệt web từ xa |
+| MCP | Model Context Protocol (Giao thức Ngữ cảnh Mô hình) |
+| `@sa2web/mcp` | Gói npm Sa2web MCP / CLI |
+| `sa2` | CLI trình duyệt từ xa khuyến nghị của Sa2web |
+| Passkey | Phương thức xác thực không mật khẩu dựa trên tiêu chuẩn như WebAuthn |

@@ -46,6 +46,38 @@ jobs:
           quarto render zh --to html
 
       # ----------------------------
+      # Render Hindi book
+      # ----------------------------
+
+      - name: Render Hindi book
+        run: |
+          quarto render hi --to html
+
+      # ----------------------------
+      # Render Vietnamese book
+      # ----------------------------
+
+      - name: Render Vietnamese book
+        run: |
+          quarto render vi --to html
+
+      # ----------------------------
+      # Render Korean book
+      # ----------------------------
+
+      - name: Render Korean book
+        run: |
+          quarto render ko --to html
+
+      # ----------------------------
+      # Render Japanese book
+      # ----------------------------
+
+      - name: Render Japanese book
+        run: |
+          quarto render ja --to html
+
+      # ----------------------------
       # Assemble final website
       # ----------------------------
 
@@ -53,9 +85,17 @@ jobs:
         run: |
           mkdir -p publish/en
           mkdir -p publish/zh
+          mkdir -p publish/hi
+          mkdir -p publish/vi
+          mkdir -p publish/ko
+          mkdir -p publish/ja
 
           cp -a en/_book/. publish/en/
           cp -a zh/_book/. publish/zh/
+          cp -a hi/_book/. publish/hi/
+          cp -a vi/_book/. publish/vi/
+          cp -a ko/_book/. publish/ko/
+          cp -a ja/_book/. publish/ja/
 
           cp site/index.html publish/index.html
           cp site/robots.txt publish/robots.txt

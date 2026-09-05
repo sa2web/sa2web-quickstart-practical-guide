@@ -1,0 +1,174 @@
+# Bật Xác thực Passkey cho Trang Mục tiêu
+
+## Mục tiêu
+
+Giải thích chuẩn bị, luồng thao tác, phương pháp test cục bộ và điểm xác thực cho trang mục tiêu dùng Passkey, WebAuthn hoặc security-key đăng nhập trong môi trường trình duyệt từ xa Sa2web.
+
+![Passkey test path](../images/10-passkey.svg){#fig-passkey}
+
+Câu hỏi then chốt cho Passkey không chỉ là trang đăng nhập có mở được không. Domain hiển thị trình duyệt, trạng thái HTTPS tin cậy và tương tác xác thực trang mục tiêu phải thỏa mãn yêu cầu WebAuthn.
+
+## Điều kiện Tiên quyết
+
+Trước khi dùng đăng nhập Passkey, xác nhận ít nhất các điều sau:
+
+| Điều kiện | Mô tả |
+|---|---|
+| Trang mục tiêu hỗ trợ Passkey / WebAuthn / security keys | Trang đăng nhập cung cấp phương thức xác thực tương ứng |
+| User đã gắn Passkey trên trang mục tiêu | Nếu chưa gắn, thêm trước trong cài đặt bảo mật tài khoản trang mục tiêu |
+| Đường trình duyệt từ xa hỗ trợ tương tác xác thực | User có thể thấy nhắc trình duyệt và hoàn tất hành động xác thực |
+| Domain truy cập đúng | Passkey gắn chặt với origin trình duyệt và không thể thay thế tùy tiện bằng IP hoặc domain tạm |
+| HTTPS tin cậy | Nếu trình duyệt coi trang không an toàn, WebAuthn có thể không hoạt động bình thường |
+
+::: {.callout-warning}
+Tài liệu chính thức nói Passkey hiện vẫn ở alpha. Đăng nhập có thể thất bại trên một số trang. Xác thực từng trang trước khi dùng sản xuất.
+:::
+
+## Luồng Đăng nhập Cơ bản
+
+Sau khi trang mục tiêu được cấu hình, user theo luồng sau:
+
+1. Quản trị viên xác nhận URL, domain và luồng đăng nhập đúng trong cấu hình trang.
+2. User vào trang mục tiêu qua frontend Sa2web.
+3. Trên trang đăng nhập trang mục tiêu, user chọn đăng nhập Passkey.
+4. User hoàn tất xác thực theo nhắc trình duyệt.
+5. Sau đăng nhập thành công, xác nhận trình duyệt từ xa vào trang kinh doanh mục tiêu.
+
+Trong xác thực, đừng chỉ kiểm tra trang có mở được. Cũng xác nhận trang mục tiêu thực sự nhận diện phương thức đăng nhập Passkey.
+
+## Tại sao Domain Quan trọng
+
+Passkey gắn chặt với domain hiển thị trình duyệt, tức là origin. Khi test đăng nhập Passkey trang mục tiêu, đừng chỉ truy cập trang qua IP máy chủ hoặc địa chỉ chuyển phát tạm.
+
+Ví dụ, giả sử trang mục tiêu thực tế gắn với:
+
+```text
+login.example.com
+```
+
+Dùng bất kỳ địa chỉ sau khi test có thể kích hoạt thất bại:
+
+```text
+https://192.168.1.105/
+https://temp-tunnel.example.net/
+https://another-domain.example.com/
+```
+
+Cách đúng là làm trình duyệt cục bộ khởi tạo truy cập HTTPS với domain trang mục tiêu và đảm bảo Sa2web nhận diện domain đó là domain kinh doanh có thể proxy.
+
+## Test Cục bộ cho Passkey Trang Mục tiêu
+
+Test cục bộ phù hợp cho xác thực đường dẫn trước khi cấp quyền user sản xuất. Mục tiêu cốt lõi là làm origin trong thanh địa chỉ trình duyệt bằng domain trang mục tiêu và làm chứng chỉ tin cậy bởi trình duyệt cục bộ.
+
+### Thêm Domain Trang Mục tiêu
+
+Mở admin console:
+
+```text
+Cài đặt hệ thống > Quản lý Domain
+```
+
+Nhấn **Thêm Domain** và thêm domain trang mục tiêu, ví dụ:
+
+```text
+login.example.com
+```
+
+Quản lý domain duy trì domain kinh doanh mà hệ thống được phép xử lý. Nếu domain chưa được thêm, Sa2web có thể không xử lý như kỳ vọng ngay cả khi `hosts` trỏ nó đến máy chủ.
+
+### Cài đặt và Tin cậy Chứng chỉ Gốc Caddy
+
+Khi môi trường intranet hoặc test dùng chứng chỉ nội bộ Caddy, trình duyệt cục bộ phải tin cậy chứng chỉ gốc tương ứng. Nếu không, Passkey / WebAuthn có thể thất bại vì HTTPS không tin cậy.
+
+Thường cài đặt chứng chỉ gốc Caddy trên máy test và tin cậy trong hệ thống hoặc trình duyệt. Xem tài liệu chính thức cài đặt chứng chỉ intranet cho chi tiết cài đặt.
+
+::: {.callout-tip}
+Nếu bạn dùng domain sản xuất công khai với chứng chỉ CA công khai tin cậy bởi trình duyệt, thường không cần cài thủ công chứng chỉ gốc.
+:::
+
+### Sửa Local hosts
+
+Trong file `hosts` máy cục bộ, trỏ domain trang mục tiêu đến IP máy chủ triển khai Sa2web.
+
+```text
+<SERVER_IP> login.example.com
+```
+
+Ví dụ:
+
+```text
+192.168.1.105 login.example.com
+```
+
+Vị trí file hosts:
+
+| Hệ thống | Đường dẫn hosts |
+|---|---|
+| Windows | `C:\Windows\System32\drivers\etc\hosts` |
+| macOS / Linux | `/etc/hosts` |
+
+Sau khi sửa file, mở lại trình duyệt. Xóa cache DNS nếu cần để trình duyệt không tiếp tục dùng kết quả phân giải cũ.
+
+### Truy cập Địa chỉ Test Với Domain Mục tiêu
+
+Dùng domain trang mục tiêu truy cập địa chỉ test do Sa2web tạo hoặc yêu cầu bởi tình huống kinh doanh:
+
+```text
+https://<target-site-domain>/?saas=<...>&_d=<target-site-address>
+```
+
+Mô tả tham số:
+
+| Tham số | Mô tả |
+|---|---|
+| `<target-site-domain>` | Domain thêm trong **Quản lý Domain** và trỏ đến IP triển khai máy chủ trong `hosts` cục bộ |
+| `saas` | Tham số truy cập SaaS do hệ thống tạo hoặc yêu cầu bởi tình huống kinh doanh |
+| `_d` | Địa chỉ trang mục tiêu, thường là URL cần mở |
+
+Sau những chuẩn bị này, origin trong thanh địa chỉ trình duyệt là domain trang mục tiêu và chứng chỉ HTTPS tin cậy cục bộ. Chỉ khi đó bạn mới có điều kiện cơ bản test đăng nhập Passkey trang mục tiêu.
+
+## Xác thực Kết quả
+
+Dùng checklist này khi test:
+
+- Trang đăng nhập trang mục tiêu nhận diện và hiển thị phương thức đăng nhập Passkey.
+- User có thể kích hoạt nhắc xác thực trình duyệt.
+- User có thể hoàn tất hành động xác thực.
+- Sau đăng nhập thành công, user vào trang kinh doanh mục tiêu.
+- Nếu xác thực thất bại, nhắc trang mục tiêu và log trình duyệt từ xa có thể dùng để khắc phục sự cố.
+
+## Nguyên nhân Thất bại Phổ biến
+
+| Triệu chứng | Nguyên nhân có thể | Hướng đi |
+|---|---|---|
+| Trang đăng nhập không có mục Passkey | Tài khoản mục tiêu chưa gắn Passkey, hoặc trang chưa bật phương thức này | Gắn hoặc bật trước trong cài đặt bảo mật tài khoản trang mục tiêu |
+| Không xảy ra gì sau khi nhấn Passkey | Origin trình duyệt không khớp, hoặc trang không phải HTTPS tin cậy | Kiểm tra domain, chứng chỉ và địa chỉ truy cập |
+| Báo môi trường hiện tại không hỗ trợ | Trang mục tiêu có yêu cầu môi trường WebAuthn nghiêm ngặt hơn | Test lại với cấu hình trình duyệt được trang mục tiêu hỗ trợ |
+| Quay về trang đăng nhập sau xác thực | Phiên trang mục tiêu không thiết lập, hoặc callback xác thực bị chặn | Kiểm tra nhắc trang mục tiêu và log trình duyệt từ xa |
+| Test cục bộ OK, nhưng user sản xuất thất bại | Quyền user, nhóm, cấu hình trang hoặc mạng khác nhau | So sánh cấp quyền và cấu hình giữa user test và user sản xuất |
+
+## Khuyến nghị Triển khai
+
+Passkey liên quan chính sách trang mục tiêu, môi trường trình duyệt, domain và chứng chỉ. Xác thực dần theo trang:
+
+1. Hoàn tất test cục bộ với quản trị viên hoặc user test trước.
+2. Sau đó xác thực qua frontend Sa2web với user test thông thường.
+3. Xác nhận cấu hình trang, quản lý domain và chứng chỉ ổn định.
+4. Cấp quyền nhóm nhỏ user kinh doanh.
+5. Thu thập trang thất bại và môi trường trình duyệt thất bại, ghi nhận kết luận tương thích riêng biệt.
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Trang mục tiêu hỗ trợ Passkey / WebAuthn / security keys.
+- [ ] User đã gắn Passkey trên trang mục tiêu.
+- [ ] Domain mục tiêu đã thêm vào quản lý domain Sa2web.
+- [ ] `hosts` cục bộ trỏ domain mục tiêu đến máy chủ triển khai Sa2web.
+- [ ] Chứng chỉ HTTPS tin cậy bởi trình duyệt cục bộ.
+- [ ] Origin thanh địa chỉ trình duyệt là domain trang mục tiêu.
+- [ ] Trang mục tiêu có thể kích hoạt xác thực Passkey.
+- [ ] User có thể hoàn tất xác thực và vào trang kinh doanh.
+- [ ] Khi xác thực thất bại, hướng đi có thể xác định từ nhắc trang hoặc log trình duyệt từ xa.
+
+Tài liệu chính thức:
+
+- https://www.sa2web.com/docs/en/appendix/passkey

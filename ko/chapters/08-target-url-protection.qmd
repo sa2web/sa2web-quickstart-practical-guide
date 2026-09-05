@@ -1,0 +1,59 @@
+# 타겟 URL 보호
+
+## 목표
+
+사용자 프론트엔드가 실제 오리진 주소를 직접 표시하지 않도록 **URL 암호화**를 활성화합니다.
+
+## 적합한 시나리오
+
+- 공급업체 포털.
+- 특별 조달 채널.
+- 고객 백엔드.
+- 내부 시스템.
+- 프라이빗 SaaS.
+- 협업 사용자가 직접 알면 안 되는 오리진 주소.
+
+## URL 암호화 활성화
+
+다음으로 이동:
+
+```text
+사이트 관리 > 사이트 목록
+사이트 관리 > 내부 사이트 목록
+```
+
+대상 사이트 또는 내부 사이트를 찾고 "![](/images/site-config.png){width=22px}" 버튼을 클릭하여 사이트 또는 내부 사이트 구성 페이지로 진입합니다. @fig-encrypt-url-checked 참조:
+
+1. **URL 암호화** 활성화.
+2. 저장.
+3. 테스트 계정으로 다시 접근.
+4. 사용자 프론트엔드가 더 이상 오리진 주소를 직접 표시하지 않는지 확인.
+
+![Sa2web URL 암호화 활성화](/images/encrypt-url-checked.png){#fig-encrypt-url-checked}
+
+사용자가 암호화된 URL이 활성화된 사이트를 프론트엔드에서 접근하면 결과는 @fig-encrypted-url에 표시된 대로 나타납니다.
+
+![Sa2web 암호화된 URL](/images/encrypted-url.png){#fig-encrypted-url}
+
+브라우저 개발자 도구를 열고 소스를 검사합니다. 링크 주소도 암호화됩니다. @fig-encryped-url-hrefs 참조.
+
+![Sa2web 암호화된 링크](/images/encryped-url-hrefs.png){#fig-encryped-url-hrefs}
+
+## 협업 링크와 결합
+
+권장 흐름:
+
+```text
+협업 콘텐츠
+  ->
+SaaS 사이트
+  ->
+URL 암호화
+  ->
+협업 링크
+```
+
+## 수락 체크리스트
+
+- [ ] 사용자 프론트엔드가 실제 URL을 직접 표시하지 않음.
+- [ ] 원격 브라우저가 사이트를 정상적으로 엶.

@@ -1,0 +1,729 @@
+# スクリプトAPIの使用 {#sec-script-api}
+
+## 目標
+
+Sa2webページスクリプトと標準インターフェースインターセプションスクリプトで利用可能な `window.api` 機能を説明し、サイト設定、内部サイト設定、アカウント設定、プラグインスクリプトでのスクリプトをより確実に書けるようにする。
+
+スクリプトAPIには5つの主要カテゴリがあります：
+
+| API | 目的 |
+|---|---|
+| `api.config` | カスタム設定を読み取り；現在はコラボレーションリンク下でのみ有効 |
+| `api.http` | ページCORS制限をバイパスしてHTTPリクエスト送信 |
+| `api.user` | ユーザー、サイト、アカウント、デバイスでスコープされたデータの読み書き |
+| `api.dom` | DOMクエリ、可視性チェック、要素変更リスニング、オーバーレイ作成 |
+| `api.utils` | 条件待機とページ内JavaScript実行 |
+| `api.header()` | 記録されたリクエストまたはレスポンスヘッダーを読み取り |
+
+ページスクリプトと標準インターフェースインターセプションスクリプトは `window.api` を使用可能。SSEスクリプトは `data` が渡されることのみ保証され、通常 `window.api` に依存しない。
+
+## 全体構造
+
+スクリプト内では `api` を直接使用するか、`window.api` 経由でアクセス可能：
+
+```ts
+interface Window {
+  api: {
+    user: UserApi;
+    config: Record<string, unknown>;
+    http: HttpApi;
+    dom: DomApi;
+    utils: UtilsApi;
+    header(headerName: string, isRequestHeader: boolean): Promise<string | string[] | undefined>;
+  };
+}
+```
+
+例：
+
+```js
+const apiBase = api.config.apiBase;
+const userToken = await api.user.get('token');
+const submit = api.dom.querySelector(document, 'button[type="submit"]');
+const profile = await api.http.ajax({ url: `http://192.168.1.111:8080/profile` });
+```
+
+::: {.callout-tip}
+スクリプトではSa2webの `api.dom` クエリツールを推奨。CSSセレクタとXPathセレクタの両方をサポートし、複雑なビジネスページでは `document.querySelector()` 単独より適している。
+:::
+
+## `api.config`
+
+`api.config` はサイトスクリプト環境からカスタム設定を読み取ります。
+
+```ts
+config: Record<string, unknown>
+```
+
+例：
+
+```js
+const apiBase = api.config.apiBase;
+const featureEnabled = api.config.featureEnabled === true;
+```
+
+## `api.http`
+
+`api.http` はユーザースクリプト用のHTTPリクエストツールを提供。`api.http.ajax` はブラウザメインプロセスで実際のリクエストを実行するため、ページのCORSポリシーによる制限を受けません。
+
+### `api.http.ajax(options)`
+
+HTTPリクエストを送信。
+
+```ts
+ajax(options: {
+  url: string;
+  method?: string;
+  data?: any;
+  headers?: Record<string, string>;
+  timeout?: number;
+  dataType?: 'json' | 'text' | 'html' | 'arrayBuffer';
+  contentType?: string;
+  processData?: boolean;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data?: any;
+  error?: string;
+  timeout?: boolean;
+}>
+```
+
+パラメータ：
+
+| オプション | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `url` | `string` | - | リクエストURL。 |
+| `method` | `string` | `GET` | HTTPメソッド。 |
+| `data` | `any` | - | リクエストデータ。`GET` と `HEAD` リクエストはクエリ文字列にシリアライズ。他のメソッドはリクエストボディに書き込み。 |
+| `headers` | `Record<string, string>` | `{}` | リクエストヘッダー。 |
+| `timeout` | `number` | - | ミリ秒単位のタイムアウト。`0` より大きい場合のみ有効。 |
+| `dataType` | `'json' \| 'text' \| 'html' \| 'arrayBuffer'` | `json` | レスポンスパースモード。 |
+| `contentType` | `string` | `application/x-www-form-urlencoded; charset=UTF-8` | リクエストボディContent-Type。 |
+| `processData` | `boolean` | `true` | `data` を自動シリアライズするか。`false` の場合、`data` を直接リクエストボディとして渡す。 |
+
+戻り値：
+
+| フィールド | 型 | 説明 |
+|---|---|---|
+| `ok` | `boolean` | HTTP 2xx レスポンスで `true`。パースエラー、HTTPエラー、タイムアウト、アボート、ネットワークエラーで `false`。 |
+| `status` | `number` | HTTPステータスコード。`0` はタイムアウト、アボート、ネットワークレイヤー失敗。 |
+| `statusText` | `string` | HTTPステータステキスト。非HTTP失敗の場合は `timeout`、`abort`、`error`。 |
+| `data` | `any` | パース済みレスポンスデータ。 |
+| `error` | `string` | パース失敗または非HTTP失敗のエラーメッセージ。 |
+| `timeout` | `boolean` | 設定タイムアウトでリクエストがアボートされた場合 `true`。 |
+
+GETリクエスト例：
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/profile',
+  method: 'GET',
+  dataType: 'json',
+  timeout: 10000
+});
+
+if (ret.ok) {
+  console.log(ret.data);
+}
+```
+
+POSTリクエスト例：
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/items',
+  method: 'POST',
+  contentType: 'application/json',
+  data: { name: 'demo' }
+});
+
+if (!ret.ok) {
+  console.warn(ret.status, ret.error || ret.statusText);
+}
+```
+
+## `api.user`
+
+`api.user` はスクリプト実行中のユーザー関連データを読み書き。異なるディメンションでストレージスコープを分離可能。
+
+一般的なパラメータ：
+
+| パラメータ | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `site` | `boolean` | `false` | サイトで分離するか |
+| `account` | `boolean` | `false` | サイトアカウントまたはワークスペース名で分離するか |
+| `did` | `boolean` | `false` | デバイスで分離するか |
+
+ディメンション推奨：
+
+| シナリオ | 推奨事項 |
+|---|---|
+| 同じユーザーのデータをサイト間で共有 | `site=false` |
+| 各サイトでデータを独立して保存 | `site=true` |
+| 同じサイト下の異なるアカウントを分離 | `account=true` |
+| 同じユーザーを異なるデバイスで分離 | `did=true` |
+
+### `api.user.put()`
+
+キー値ペアを保存。
+
+```ts
+put(
+  name: string,
+  value: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+例：
+
+```js
+await api.user.put('token', 'abc123');
+await api.user.put('draft:lastOrderId', 'A-1001', true, true);
+```
+
+### `api.user.get()`
+
+指定キーを読み取り。
+
+```ts
+get(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ value: string | null, status: boolean }>
+```
+
+例：
+
+```js
+const ret = await api.user.get('token');
+if (ret.status && ret.value) {
+  console.log(ret.value);
+}
+```
+
+### `api.user.remove()`
+
+指定キーを削除。
+
+```ts
+remove(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+例：
+
+```js
+await api.user.remove('token');
+await api.user.remove('draft:lastOrderId', true, true);
+```
+
+### `api.user.incr()`
+
+指定キーの数値をステップ分増加。キーが存在しない場合は作成。
+
+```ts
+incr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+例：
+
+```js
+const ret = await api.user.incr('submitCount', 1, true);
+console.log(ret.value);
+```
+
+### `api.user.decr()`
+
+指定キーの数値をステップ分減少。キーが存在しない場合は負の初期値で作成。
+
+```ts
+decr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+例：
+
+```js
+const ret = await api.user.decr('remainingQuota', 1, true, true);
+console.log(ret.value);
+```
+
+### `api.user.startsWith()`
+
+キー名プレフィックスでデータ検索。
+
+```ts
+startsWith(
+  prefix: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<Array<{ name: string, value: string }>>
+```
+
+例：
+
+```js
+const items = await api.user.startsWith('cache:', true);
+for (const item of items) {
+  console.log(item.name, item.value);
+}
+```
+
+### `api.user.countAll()`
+
+指定キーネームのレコード数をカウント。
+
+```ts
+countAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+例：
+
+```js
+const ret = await api.user.countAll('token', true);
+console.log(ret.value);
+```
+
+### `api.user.sumAll()`
+
+指定キーネームの値の数値合計を計算。
+
+```ts
+sumAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+例：
+
+```js
+const ret = await api.user.sumAll('score', true);
+console.log(ret.value);
+```
+
+## `api.dom`
+
+`api.dom` はDOMクエリ、可視性チェック、接続リスナー、リサイズリスナー、オーバーレイ作成を提供。
+
+セレクタサポート：
+
+| 構文 | 説明 |
+|---|---|
+| `.button.primary` | CSSセレクタ |
+| `xpath://div[@id="app"]` | XPathセレクタ |
+| `.dialog:p` | 一致要素の親要素を返す |
+| `.dialog:p2` | 一致要素から2レベル上の祖先を返す |
+| `.header:bottom` | オーバーレイ境界メソッドで要素の下境界を使用 |
+| `.sidebar:right` | オーバーレイ境界メソッドで要素の右境界を使用 |
+
+@sec-matchSelectorも参照。
+
+### `api.dom.createMutationObserver()`
+
+`MutationObserver` を作成しキャッシュ。同じバインディング名のオブザーバーがターゲット要素に既に存在する場合、既存オブザーバーを直接返す。
+
+```ts
+createMutationObserver(
+  ele: Element,
+  bindStr: string,
+  childList: boolean,
+  subtree: boolean,
+  attributes: boolean,
+  characterData: boolean,
+  fn: (mutations: MutationRecord[]) => void
+): MutationObserver
+```
+
+例：
+
+```js
+api.dom.createMutationObserver(
+  document.body,
+  '__bodyObserver__',
+  true,
+  true,
+  false,
+  false,
+  (mutations) => console.log(mutations)
+);
+```
+
+### `api.dom.querySelector()`
+
+最初の一致要素をクエリ。
+
+```ts
+querySelector(doc: Document, cssOrXPathSelector: string): HTMLElement | null
+```
+
+例：
+
+```js
+const el = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+```
+
+### `api.dom.querySelectorAll()`
+
+すべての一致要素をクエリ。
+
+```ts
+querySelectorAll(doc: Document, cssOrXPathSelector: string): HTMLElement[]
+```
+
+例：
+
+```js
+const buttons = api.dom.querySelectorAll(document, 'button.primary');
+buttons.forEach((button) => console.log(button.textContent));
+```
+
+### `api.dom.isVisible()`
+
+要素が可視交差領域にあるかチェック。
+
+```ts
+isVisible(ele: HTMLElement): Promise<boolean>
+```
+
+例：
+
+```js
+const el = api.dom.querySelector(document, '.submit');
+if (el && await api.dom.isVisible(el)) {
+  console.log('visible');
+}
+```
+
+### `api.dom.getVisibleRect()`
+
+要素の現在の可視矩形を取得。
+
+```ts
+getVisibleRect(ele: HTMLElement): Promise<DOMRectReadOnly>
+```
+
+例：
+
+```js
+const el = api.dom.querySelector(document, '.panel');
+if (el) {
+  const rect = await api.dom.getVisibleRect(el);
+  console.log(rect.left, rect.top, rect.width, rect.height);
+}
+```
+
+### `api.dom.getConnectListeners()`
+
+現在の接続リスナーリストを取得。
+
+```ts
+getConnectListeners(): Array<{
+  querySelector: string;
+  callback: (isConnected: boolean) => void;
+  isConnected?: boolean;
+}>
+```
+
+例：
+
+```js
+api.dom.addConnectListener('.modal', () => {});
+console.log(api.dom.getConnectListeners());
+```
+
+### `api.dom.addConnectListener()`
+
+要素がドキュメントに現れたり消えたりするのをリスン。
+
+```ts
+addConnectListener(
+  cssOrXPathSelector: string,
+  callback: (isConnected: boolean) => void
+): void
+```
+
+例：
+
+```js
+api.dom.addConnectListener('.dialog', (isConnected) => {
+  console.log('dialog:', isConnected);
+});
+```
+
+### `api.dom.removeConnectListener()`
+
+指定セレクタの接続リスナーを削除。
+
+```ts
+removeConnectListener(cssOrXPathSelectors: string[]): void
+```
+
+例：
+
+```js
+api.dom.removeConnectListener(['.dialog', '.toast']);
+```
+
+### `api.dom.addResizeListener()`
+
+ターゲット要素のサイズと位置変更をリスン。要素が存在しない場合、コールバックは空の矩形を受信。
+
+```ts
+addResizeListener(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  callback: (rect: DOMRect) => void,
+  createObserver?: boolean,
+  delayTime?: number
+): ResizeObserver | (() => void)
+```
+
+例：
+
+```js
+api.dom.addResizeListener('.target', '__targetResize__', (rect) => {
+  console.log(rect.width, rect.height);
+});
+```
+
+### `api.dom.createOverlayBy()`
+
+ターゲット要素の可視領域に従う固定位置オーバーレイを作成。
+
+```ts
+createOverlayBy(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  createObserver?: boolean,
+  delayTime?: number,
+  fn?: (rect: DOMRectReadOnly) => void
+): HTMLElement
+```
+
+例：
+
+```js
+const overlay = api.dom.createOverlayBy('.target', '__overlay__');
+overlay.style.border = '2px solid #f00';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+### `api.dom.createOverlayByBorder()`
+
+上、右、下、左境界から固定位置オーバーレイを作成。境界値はピクセル数またはセレクタ。
+
+```ts
+createOverlayByBorder(
+  bindWindowStr: string,
+  top: string | number,
+  right: string | number,
+  bottom: string | number,
+  left: string | number,
+  createObserver?: boolean,
+  delayTime?: number
+): HTMLElement
+```
+
+例：
+
+```js
+const panel = api.dom.createOverlayByBorder(
+  '__centerPanel__',
+  'header:bottom',
+  20,
+  'footer:top',
+  '.sidebar:right'
+);
+panel.style.background = 'rgba(0,0,0,.08)';
+```
+
+## `api.utils`
+
+`api.utils` はページ条件待機とページコンテキストでのコード実行のための一般的なヘルパー機能を提供。
+
+### `api.utils.wait()`
+
+条件関数がtruthy値を返すまでポーリング。タイムアウトでエラー投げ。
+
+```ts
+wait(
+  fn: () => boolean,
+  timeoutMs: number,
+  intervalMs?: number
+): Promise<void>
+```
+
+例：
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.ready'),
+  10000,
+  200
+);
+```
+
+### `api.utils.runScript()`
+
+現在のページでJavaScriptコードを実行し結果を返す。
+
+```ts
+runScript(
+  code: string,
+  callback?: (result: any, error: Error) => void
+): Promise<any>
+```
+
+例：
+
+```js
+const title = await api.utils.runScript('document.title');
+console.log(title);
+```
+
+コールバック形式：
+
+```js
+await api.utils.runScript('document.body.innerText.slice(0, 100)', (result, error) => {
+  if (error) {
+    console.error(error);
+    return;
+  }
+  console.log(result);
+});
+```
+
+## `api.header()`
+
+`api.header(headerName, isRequestHeader)` はリモートブラウザで記録されたリクエストまたはレスポンスヘッダーを読み取り。
+
+```ts
+header(
+  headerName: string,
+  isRequestHeader: boolean
+): Promise<string | string[] | undefined>
+```
+
+パラメータ：
+
+| パラメータ | 型 | 説明 |
+|---|---|---|
+| `headerName` | `string` | リクエストまたはレスポンスヘッダー名。読み取り時に小文字変換 |
+| `isRequestHeader` | `boolean` | `true` でリクエストヘッダー読み取り。`false` でレスポンスヘッダー読み取り |
+
+例：
+
+```js
+const cookie = await api.header('cookie', true);
+const setCookie = await api.header('set-cookie', false);
+```
+
+注意：
+
+- サイト設定で追加されたリクエストまたはレスポンスヘッダーのみ記録される。
+- リクエストヘッダーはリモートブラウザが送信したリクエストから来る。
+- レスポンスヘッダーはリモートブラウザが受信したレスポンスから来る。
+- レスポンスヘッダーは文字列配列を返す場合がある。
+
+## 一般的なスクリプト組み合わせ
+
+### 要素を待機してクリック
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.login-button'),
+  10000,
+  200
+);
+
+const button = api.dom.querySelector(document, '.login-button');
+button?.click();
+```
+
+### XPathで英語ボタンを検索
+
+```js
+const submit = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+
+if (submit && await api.dom.isVisible(submit)) {
+  submit.click();
+}
+```
+
+### ページ状態保存
+
+```js
+const count = await api.user.incr('visitCount', 1, true, true);
+await api.user.put('lastTitle', document.title, true, true);
+
+console.log(count.value);
+```
+
+### 関心領域にオーバーレイ追加
+
+```js
+const overlay = api.dom.createOverlayBy('.customer-phone', '__phoneMask__');
+overlay.style.background = '#fff';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+## 使用原則
+
+スクリプトをビジネスコードのように管理：
+
+- 一致URLを制限し、スクリプトが無関係なページで実行されないようにする。
+- ロールバックとトラブルシューティングのためにスクリプトに明確な名前を付ける。
+- まずテストサイトまたはテストアカウントで検証。
+- DOMセレクタに依存するスクリプトを回帰テスト。
+- 保存データに明確なプレフィックスを使用、例：`cache:`、`draft:`、`state:`。
+- シークレット、長寿命トークン、アカウントパスワードをスクリプトにハードコードしない。
+- スクリプト変更理由を記録し、必要時にコードレビュー実施。
+
+## トラブルシューティングチェックリスト
+
+| 問題 | 確認事項 |
+|---|---|
+| `api` が存在しない | スクリプトタイプが `window.api` をサポートするか確認。SSEスクリプトはこれに依存すべきではない |
+| 要素が見つからない | URLが一致するか、ページが読み込み完了したか、セレクタが変更されたか確認 |
+| XPathが動作しない | `xpath://` プレフィックスが使用されているか確認 |
+| ヘッダーが読めない | 対応するリクエストまたはレスポンスヘッダー名をサイト設定で先に追加 |
+| ユーザーデータがスコープ間で混在 | `site`、`account`、`did` ディメンションパラメータ確認 |
+| オーバーレイ位置が異常 | ターゲット要素が可視か、境界セレクタが正しいか確認 |
+| スクリプトが他ページに影響 | 一致URLを絞り込むか、スクリプト先頭にページ条件チェック追加 |

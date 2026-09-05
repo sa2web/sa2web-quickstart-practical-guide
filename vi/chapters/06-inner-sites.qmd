@@ -1,0 +1,77 @@
+# Bật Truy cập Trang Nội bộ (Inner Site Access)
+
+## Mục tiêu
+
+Cho phép nhân viên truy cập ERP, CRM, hệ thống đơn hàng hoặc admin console nội bộ qua Sa2web.
+
+Mỗi user frontend có hồ sơ trình duyệt từ xa độc lập cho trang nội bộ. Nếu user A truy cập và đăng nhập trang nội bộ, user B sẽ không kế thừa trạng thái đăng nhập của user A khi truy cập cùng trang nội bộ. Dữ liệu trình duyệt của họ vẫn được cô lập.
+
+## Xác nhận Khả năng truy cập Mạng
+
+URL trang nội bộ phải có thể truy cập từ môi trường triển khai hoặc nút trình duyệt.
+
+Sa2web không thay thế kết nối mạng nền tảng. Nút trình duyệt vẫn cần điều kiện định tuyến, đường hầm intranet, DNS, tường lửa và ACL cần thiết để truy cập hệ thống nội bộ.
+
+## Thêm Trang Nội bộ
+
+Đi đến:
+
+```text
+Quản lý trang > Danh sách trang nội bộ
+```
+
+Mở danh sách trang nội bộ Sa2web, như hình @fig-inner-site-list.
+
+![Sa2web inner site list](/images/inner-site-list.png){#fig-inner-site-list}
+
+Nhấn **Thêm trang** để mở hộp thoại thêm trang nội bộ, như hình @fig-add-inner-site-dialog.
+
+![Sa2web add inner site](/images/add-inner-site-dialog.png){#fig-add-inner-site-dialog}
+
+Điền:
+
+- Tên.
+- URL.
+- Mô tả.
+- Logo.
+
+## Cấp quyền Nhóm
+
+Cấp quyền trang nội bộ cho user kinh doanh trong nhóm.
+
+Đi đến:
+
+```text
+Quản lý nhóm > Trang nội bộ
+```
+
+Mở trang cấp quyền trang nội bộ, như hình @fig-inner-site-group.
+
+![Sa2web inner site authorization](/images/inner-site-group.png){#fig-inner-site-group}
+
+Chọn trang nội bộ cần cấp quyền, sau đó nhấn **Lưu**.
+
+Sau cấp quyền, user có thể nhấn **Vào** trong khu vực **Hệ thống nội bộ** của frontend, như hình @fig-inner-site-access.
+
+![Sa2web inner site access](/images/inner-site-access.png){#fig-inner-site-access}
+
+## Đường đi Làm việc Từ xa Điển hình
+
+```text
+Trình duyệt bình thường của nhân viên
+    ->
+Sa2web
+    ->
+Môi trường chạy trình duyệt phía doanh nghiệp
+    ->
+ERP / CRM / backend nội bộ
+```
+
+Với đường đi này, thiết bị nhân viên không cần kết nối trực tiếp tới trang nội bộ và địa chỉ hệ thống nội bộ không cần bị công khai.
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Nút trình duyệt có thể truy cập URL nội bộ.
+- [ ] User được cấp quyền thấy trang nội bộ.
+- [ ] User không được cấp quyền không thấy.
+- [ ] Thiết bị bên ngoài không cần kết nối trực tiếp tới trang nội bộ.

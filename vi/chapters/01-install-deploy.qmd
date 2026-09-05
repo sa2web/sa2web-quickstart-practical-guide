@@ -1,0 +1,309 @@
+# Cài đặt và Triển khai
+
+## Mục tiêu
+
+Chuẩn bị Docker và Docker Compose trên máy chủ Linux x86_64, tải gói cài đặt Sa2web, hoàn thành cài đặt lần đầu và kết thúc cấu hình tối thiểu có thể sử dụng: đăng ký license, thêm máy, thêm trình duyệt, cấp quyền nhóm và cuối cùng mở Cloud Browser từ frontend người dùng thông thường.
+
+Yêu cầu cơ bản chính thức của Sa2web là: 1 nhân CPU trở lên, khuyến nghị 4 GB bộ nhớ (tối thiểu 2 GB), Linux x86_64 và khả năng chạy lệnh Docker.
+
+Hướng dẫn này sử dụng **Ubuntu 24.04 LTS x86_64** làm ví dụ.
+
+## Chuẩn bị Máy chủ Ubuntu
+
+Chuẩn bị tối thiểu khuyến nghị:
+
+| Mục | Khuyến nghị |
+|---|---|
+| Hệ điều hành | Ubuntu 24.04 LTS x86_64 |
+| CPU | 2 nhân trở lên tốt hơn cho kiểm tra và sử dụng thực tế |
+| Bộ nhớ | 4 GB trở lên |
+| Quyền hạn | root hoặc sudo |
+| Mạng | Máy chủ có thể truy cập nguồn image Docker và client có thể truy cập máy chủ |
+| Tên miền | Cho triển khai công khai, chuẩn bị tên miền phân giải đến IP công khai của máy chủ |
+
+Trước khi cài đặt, hãy xác nhận các địa chỉ máy chủ:
+
+| Địa chỉ | Mục đích | Ví dụ |
+|---|---|---|
+| IP riêng (Private IP) | Truyền thông giữa dịch vụ Sa2web và các thành phần keeper/trình duyệt | `192.168.1.111` |
+| IP công khai (Public IP) | Điểm truy cập người dùng bên ngoài | `203.0.113.10` |
+| Tên miền | Chứng chỉ HTTPS sản xuất và địa chỉ truy cập | `browser.example.com` |
+
+::: {.callout-warning}
+Sa2web hiện yêu cầu Linux x86_64 cho triển khai máy chủ. Windows, macOS và ARM64 không thuộc môi trường triển khai được hỗ trợ chính thức hiện tại.
+:::
+
+::: {.callout-tip}
+Nếu bạn chỉ kiểm tra trên LAN, có thể tạm thời dùng IP riêng cho cả trường IP công khai và tên miền. Địa chỉ truy cập sẽ trông như `https://192.168.1.105/`. Nếu thanh địa chỉ trình duyệt cảnh báo chứng chỉ không an toàn, xem @sec-safe-cert.
+:::
+
+## Cài đặt Docker và Docker Compose
+
+Docker hiện khuyến nghị cài đặt Docker Engine qua kho apt.
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+Thêm kho:
+
+```bash
+sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<EOF2
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF2
+
+sudo apt update
+```
+
+Cài đặt:
+
+```bash
+sudo apt install -y \
+  docker-ce docker-ce-cli containerd.io \
+  docker-buildx-plugin docker-compose-plugin
+```
+
+Xác minh:
+
+```bash
+docker --version
+docker compose version
+sudo docker ps
+```
+
+Đối với user không phải root, thêm user hiện tại vào nhóm `docker`:
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+Đăng nhập lại terminal, sau đó chạy:
+
+```bash
+docker ps
+```
+
+## Tải gói cài đặt Sa2web
+
+Mở trang web Sa2web:
+
+```text
+https://www.sa2web.com
+```
+
+Nhấn menu **Download** ở trên cùng để mở trang tải, sau đó chọn phiên bản bạn cần, ví dụ Team Edition hoặc Enterprise Edition.
+
+Nếu chưa đăng nhập, bạn sẽ được yêu cầu tạo tài khoản hoặc đăng nhập trước khi tải. Nếu chưa có tài khoản, hãy đăng ký mới:
+
+1. Nhập địa chỉ email.
+2. Nhập mật khẩu mong muốn.
+3. Nhập lại mật khẩu để xác nhận.
+4. Nhấn để nhận mã xác minh.
+5. Kiểm tra email và nhập mã.
+6. Đồng ý điều khoản.
+7. Nhấn tạo tài khoản.
+
+Sau khi tạo tài khoản, quay lại trang tải và nhấn lại phiên bản mục tiêu. Trình duyệt sẽ tải gói cài đặt.
+
+::: {.callout-note}
+Tên gói thay đổi theo phiên bản. Hướng dẫn này dùng `browser_team_x.y.z.tar.gz` hoặc `browser_full_x.y.z.tar.gz` để đại diện cho tên file thực tế đã tải.
+:::
+
+## Tải lên và Giải nén gói
+
+Tải gói từ máy tính cục bộ lên máy chủ. Bạn có thể dùng `scp`, bảng điều khiển máy chủ, bastion host, công cụ SFTP hoặc console nhà cung cấp đám mây.
+
+Ví dụ:
+
+```bash
+scp browser_team_x.y.z.tar.gz root@192.168.1.105:/opt/
+```
+
+Đăng nhập máy chủ, vào thư mục tải lên và giải nén gói:
+
+```bash
+ssh root@192.168.1.105
+
+cd /opt
+tar -xzf browser_team_x.y.z.tar.gz
+cd browser_team_x.y.z
+```
+
+Nếu bạn tải phiên bản Full, thay thế tên file và thư mục bằng tên thực tế:
+
+```bash
+tar -xzf browser_full_x.y.z.tar.gz
+cd browser_full_x.y.z
+```
+
+## Chạy Script Cài đặt
+
+Sau khi vào thư mục đã giải nén, chạy trình cài đặt:
+
+```bash
+# Chạy script cài đặt
+chmod +x install.sh
+sh install.sh
+```
+
+Trình cài đặt hỏi các tham số triển khai lần lượt. Hãy điền trước bảng sau và nhập giá trị khi cài đặt.
+
+| Yêu cầu (Prompt) | Khuyến nghị |
+|---|---|
+| Thư mục cài đặt | Dùng mặc định nếu có thể. Nếu tùy chỉnh, dùng thư mục chuyên biệt và đảm bảo user hiện tại có đủ quyền hoặc có sudo. |
+| IP riêng máy chủ | Nhập địa chỉ riêng của máy chủ, ví dụ `192.168.1.105` |
+| IP công khai máy chủ | Triển khai công khai thì nhập IP công khai. Triển khai LAN thì nhập cùng IP riêng |
+| Tên miền | Dùng tên miền của bạn nếu có. Không thì dùng IP công khai hoặc IP riêng |
+| Tên hệ thống | Tên hệ thống hiển thị trên trang trình duyệt, ví dụ `Sa2web Demo` |
+| Mật khẩu user `system` | Đặt mật khẩu mạnh. Nhấn Enter trực tiếp dùng mật khẩu mặc định `abc123456` |
+| Tùy chọn tạo chứng chỉ | Chọn `1` để xin chứng chỉ tự động cho tên miền công khai, `2` cho chứng chỉ tự ký, hoặc `3` dùng chứng chỉ của bạn |
+
+Tùy chọn chứng chỉ theo tình huống:
+
+| Tùy chọn | Tình huống |
+|---|---|
+| `1` | Máy chủ triển khai trên internet công khai, tên miền đã phân giải đến máy chủ này, muốn xin chứng chỉ HTTPS miễn phí tự động |
+| `2` | Kiểm tra LAN, không có tên miền hoặc truy cập dựa trên IP tạm thời |
+| `3` | Tổ chức đã có chứng chỉ và cần dùng file chứng chỉ riêng |
+
+::: {.callout-note}
+Khi chọn tùy chọn `2` cho triển khai LAN, xem @sec-free-cert và @sec-safe-cert nếu bạn không muốn thanh địa chỉ trình duyệt hiển thị cảnh báo bảo mật.
+:::
+
+Nếu script tiếp tục hỏi các câu hỏi nâng cao không chắc chắn, nhấn Enter để dùng mặc định cho lần kiểm tra đầu tiên. Script tải image offline, tạo `docker-compose.yml`, ghi cấu hình và khởi động container.
+
+::: {.callout-warning}
+Không giữ mật khẩu mặc định `abc123456` trong sản xuất. Ngay cả khi bạn nhấn Enter khi cài đặt để test nhanh, hãy đổi mật khẩu `system` ngay sau lần đăng nhập đầu tiên và tạo quản trị viên dự phòng.
+:::
+
+Đối với triển khai công khai, cũng mở các cổng sau trong cài đặt mạng:
+
+| Cổng | Mục đích |
+|---|---|
+| 443(tcp), 80(tcp) | Cổng mặc định cho truy cập HTTP(S) |
+| 3478(tcp,udp) | Bắt buộc cho truyền thông WebRTC. Mở thêm cổng UDP như 49160-49200 nếu cần |
+
+## Lần truy cập đầu tiên Sa2web
+
+Sau cài đặt, mở địa chỉ triển khai trong trình duyệt:
+
+```text
+https://<APP_DOMAIN>/
+```
+
+Ví dụ:
+
+```text
+https://192.168.1.105/
+https://browser.example.com/
+```
+
+Địa chỉ đăng nhập admin console thường là:
+
+```text
+https://<APP_DOMAIN>/admin/login
+```
+
+Đăng nhập bằng user `system` và mật khẩu cấu hình khi cài đặt. Nhập mã xác minh theo yêu cầu trên trang, như hình @fig-admin-login.
+
+![Sa2web admin console login](/images/admin-login.png){#fig-admin-login}
+
+## Đăng ký License
+
+Sau khi đăng nhập admin console, mở hộp thoại đăng ký license, như hình @fig-register-license.
+
+![Sa2web license registration](/images/register-license.png){#fig-register-license}
+
+Sau đó quay lại trang web Sa2web:
+
+```text
+https://www.sa2web.com
+```
+
+Mở trang **My** và lấy license miễn phí từ trung tâm tài khoản. Copy `license` và `key` từ trang vào hộp thoại đăng ký license trong admin console và lưu, như hình @fig-get-license.
+
+![Lấy license từ trang web Sa2web](/images/get-license.png){#fig-get-license}
+
+::: {.callout-note}
+License miễn phí thường phù hợp cho học tập, xác thực và thử nghiệm quy mô nhỏ. Một số khả năng nâng cao có thể xuất hiện trong UI nhưng có thể không có hiệu lực tùy thuộc loại license.
+:::
+
+## Trạng thái dịch vụ và Log
+
+Xem trạng thái container:
+
+```bash
+docker compose -f <thư-mục-cài-đặt>/docker-compose.yml ps
+```
+
+Xem log ứng dụng:
+
+```bash
+tail -n 200 <thư-mục-cài-đặt>/logs/app/app.log
+```
+
+Hoặc xem log Docker Compose:
+
+```bash
+docker compose -f <thư-mục-cài-đặt>/docker-compose.yml logs --tail 200 --follow
+```
+
+## Trình duyệt cục bộ và Chứng chỉ SSL
+
+### Sa2web Triển khai Công khai với Tên miền Riêng {#sec-free-cert}
+
+1. Tại nhà cung cấp tên miền, ví dụ Cloudflare, trỏ bản ghi DNS tên miền đến địa chỉ IP của máy chủ triển khai Sa2web.
+2. Mở cổng 80 và 443 trong cài đặt mạng của máy chủ Sa2web.
+3. Khi người dùng lần đầu truy cập `https://<domain>/`, dịch vụ Caddy của Sa2web tự động xin chứng chỉ tin cậy từ Let's Encrypt. Trình duyệt người dùng sẽ không còn hiển thị cảnh báo chứng chỉ không an toàn.
+
+### Sa2web Triển khai trên LAN với Chứng chỉ Tự ký Caddy {#sec-safe-cert}
+
+1. Trước tiên lấy chứng chỉ. Bạn có thể lấy `root.crt` từ `$INSTALL_PATH/data/caddy/pki/authorities/local/root.crt` và gửi cho user cài đặt. Hoặc user có thể nhấn menu pop-up góc dưới bên trái, nhấn **My Devices**, sau đó nhấn **Download Certificate**, như hình @fig-down-cert.
+
+![Sa2web download root certificate](/images/down-cert.png){#fig-down-cert}
+
+2. Sau khi tải chứng chỉ, cài đặt vào kho chứng chỉ gốc tin cậy, như hình @fig-install-root-cert.
+
+![Sa2web install root certificate](/images/install-root-cert.png){#fig-install-root-cert}
+
+3. Sau khi cài chứng chỉ, thoát trình duyệt và mở lại. Khi truy cập lại, trình duyệt không còn hiển thị cảnh báo chứng chỉ không an toàn, như hình @fig-safe-cert.
+
+![Sa2web trusted certificate](/images/safe-cert.png){#fig-safe-cert}
+
+Các điểm kiểm tra thường gặp:
+
+| Vấn đề | Kiểm tra gì |
+|---|---|
+| Không mở được trang | Nhóm bảo mật, tường lửa, phân giải DNS và chế độ chứng chỉ |
+| Đăng nhập thất bại | Mật khẩu `system` và mã xác minh |
+| Máy offline | IP máy, cổng `7000` và trạng thái container |
+| Trình duyệt không khởi động | Log Docker Compose và trạng thái máy |
+| Mạng cô lập không khả dụng | Cấu hình proxy trình duyệt và xem nhóm có được cấp quyền mạng cô lập đó không |
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Docker hoạt động.
+- [ ] `docker compose` hoạt động.
+- [ ] Trình cài đặt Sa2web hoàn thành thành công.
+- [ ] Địa chỉ triển khai `https://<APP_DOMAIN>/` có thể truy cập.
+- [ ] `/admin/login` có thể truy cập.
+- [ ] User `system` có thể đăng nhập admin console.
+- [ ] License đã đăng ký.
+- [ ] Mật khẩu mặc định đã đổi.
+
+Tham khảo:
+
+- https://www.sa2web.com/docs/en/install/prerequisites
+- https://www.sa2web.com/docs/en/install/deploy
+- https://docs.docker.com/engine/install/ubuntu/

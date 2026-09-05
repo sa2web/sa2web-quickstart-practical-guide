@@ -1,0 +1,89 @@
+# SaaS 브라우징 활성화
+
+## 목표
+
+고정된 비즈니스 웹사이트를 SaaS 사이트로 구성하여 직원들이 Sa2web 사용자 프론트엔드에서 직접 진입하고, 관리자가 이미 로그인한 원격 브라우저 계정을 재사용할 수 있도록 합니다.
+
+SaaS 브라우징은 여러 사람이 같은 비즈니스 계정을 공유할 때 적합합니다. 관리자가 백엔드에서 먼저 사이트에 로그인합니다. 승인된 프론트엔드 사용자는 이미 로그인된 상태에서 사이트에 접근합니다.
+
+## 사이트 카테고리 생성
+
+다음으로 이동:
+
+```text
+사이트 관리 > 사이트 카테고리 관리
+```
+
+비즈니스 영역별로 카테고리를 생성합니다. 예: 해외 무역 플랫폼, 고객 서비스 시스템, 데이터 분석, 공통 시스템. @fig-site-category 참조.
+
+![Sa2web 사이트 카테고리 관리](/images/site-category.png){#fig-site-category}
+
+## SaaS 사이트 추가
+
+다음으로 이동:
+
+```text
+사이트 관리 > 사이트 목록
+```
+
+사이트 추가 시, @fig-add-site에 표시된 대로 입력합니다:
+
+- 사이트 이름.
+- 전체 `https://` URL.
+- 카테고리.
+- 로고.
+- 설명.
+- 상태.
+- 계정 카테고리.
+
+![Sa2web SaaS 사이트 추가](/images/add-site.png){#fig-add-site}
+
+사이트가 추가되면 사이트 목록에 나타납니다. @fig-site-list 참조.
+
+![Sa2web 사이트 목록](/images/site-list.png){#fig-site-list}
+
+## 계정 유형 및 브라우저 계정 생성
+
+다음으로 이동:
+
+```text
+사이트 관리 > 사이트 브라우저 계정
+```
+
+대상 사이트의 브라우저 계정을 생성합니다. 저장 후 목록에서 "![](/images/login.png){width=20px}" 버튼을 클릭하면 원격 브라우저가 대상 사이트를 열고 로그인을 완료합니다. @fig-site-browser-account 참조.
+
+![Sa2web 사이트 브라우저 계정 로그인](/images/site-browser-account.png){#fig-site-browser-account}
+
+## 그룹 권한 부여
+
+그룹에서 다음 리소스를 승인합니다:
+
+- 사용자.
+- SaaS 사이트.
+
+그룹에서 SaaS 사이트를 선택합니다. @fig-group-privileges-site 참조.
+
+![Sa2web SaaS 사이트 그룹 권한 부여](/images/group-privileges-site.png){#fig-group-privileges-site}
+
+## 사용자 접근
+
+사용자는 다음에서 로그인합니다:
+
+```text
+https://<APP_DOMAIN>/app/login
+```
+
+사용자 홈 페이지에서, @fig-user-access-saas에 표시된 대로 승인된 사이트를 클릭하여 원격 브라우저에 진입하고 SaaS 사이트에 접근합니다. @fig-user-access-saas-site 참조.
+
+![Sa2web 사용자 센터](/images/user-access-saas.png){#fig-user-access-saas}
+
+![Sa2web 사용자의 SaaS 사이트 접근](/images/user-access-saas-site.png){#fig-user-access-saas-site}
+
+관리자가 백엔드에서 로그인을 이미 완료했으므로, 사용자는 로그인된 상태에서 SaaS 사이트에 진입합니다. 계정 이름은 구성에 따라 자동으로 숨겨지므로 프론트엔드 사용자는 공유 계정 정보를 보지 못합니다.
+
+## 수락 체크리스트
+
+- [ ] 사용자 프론트엔드에서 승인된 사이트를 표시할 수 있음.
+- [ ] 승인되지 않은 사용자는 사이트를 볼 수 없음.
+- [ ] 사이트 클릭 시 원격 브라우저가 열림.
+- [ ] 해당 브라우저 계정이 로그인 상태 유지.

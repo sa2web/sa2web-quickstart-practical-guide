@@ -1,0 +1,62 @@
+# Bật Ghi âm và Phát lại Kiểm toán (Recording and Replay Audit)
+
+## Mục tiêu
+
+Đưa truy cập duyệt web từ xa của nhóm được chỉ định vào chế độ ghi âm và phát lại lịch sử thao tác trong backend.
+
+## Điều kiện Tiên quyết
+
+- Phiên bản triển khai hỗ trợ bộ tính năng đầy đủ và gói cài đặt phải là Enterprise Edition.
+- Quản trị viên có quyền **Xem Ghi âm và Phát lại (View Recording and Replay)**.
+- Bản ghi truy cập đã được tạo.
+
+## Bật Ghi âm
+
+Đi đến:
+
+```text
+Quản lý nhóm > Danh sách nhóm
+```
+
+Nhấn **Quyền hạn** để mở trang cài đặt quyền nhóm, như hình @fig-group-privileges-replay. Chọn **Ghi âm và Phát lại (Recording and Replay)**, sau đó lưu.
+
+![Sa2web group recording and replay](/images/group-privileges-replay.png){#fig-group-privileges-replay}
+
+Sau đó, user trong nhóm vào chế độ ghi âm khi duyệt web, như hình @fig-replay-record.
+
+![Sa2web frontend recording page](/images/replay-record.png){#fig-replay-record}
+
+Trong khi ghi âm, một đường đỏ xuất hiện ở đầu trang để nhắc user rằng truy cập hiện tại đang được ghi âm.
+
+## Xem Phát lại
+
+Đi đến:
+
+```text
+Quản lý User > Danh sách User
+Quản lý User > Danh sách Admin
+```
+
+Tìm user mục tiêu và nhấn nút "![](/images/replay.png){width=30px}" để vào trang phát lại, như hình @fig-replay-page.
+
+![Sa2web replay page](/images/replay-page.png){#fig-replay-page}
+
+1. Chọn bản ghi truy cập.
+2. Dùng điều khiển phát, tạm dừng và tiến độ để xem lại.
+3. Nếu cần copy nội dung từ trang phát lại, nhấn nút "![](/images/unlock-record-copy.png){width=30px}". Bạn có thể copy nội dung từ trang phát lại.
+
+## Tình huống Phù hợp
+
+- Kiểm toán thao tác nhân viên.
+- Xem lại đào tạo.
+- Khắc phục sự cố.
+- Bàn giao kinh doanh.
+- Xem lại backend rủi ro cao.
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Ghi âm được bật cho nhóm mục tiêu.
+- [ ] Truy cập mới tạo bản ghi.
+- [ ] Trang phát lại mở được.
+- [ ] Điều khiển phát lại và tiến độ hoạt động bình thường.
+- [ ] Admin không được cấp quyền không thể xem bản ghi.

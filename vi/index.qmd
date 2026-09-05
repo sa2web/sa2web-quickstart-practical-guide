@@ -1,0 +1,83 @@
+# Sa2web là gì? {.unnumbered}
+
+Sa2web là một nền tảng trình duyệt từ xa dành cho các hệ thống nội bộ và ứng dụng kinh doanh của doanh nghiệp. Bạn cũng có thể coi nó như một "trạm bảo vệ trình duyệt" (browser bastion host). Nó làm nhiều hơn việc chỉ chuyển trình duyệt lên đám mây: nó tập trung hóa các điểm truy cập, môi trường chạy trình duyệt, phiên tài khoản, chính sách quyền hạn, bảo vệ dữ liệu nhạy cảm và ghi nhật ký kiểm toán vào một hệ thống không gian làm việc có thể quản lý.
+
+Trong mô hình truyền thống, nhân viên thường truy cập các sản phẩm SaaS, backend kinh doanh hoặc hệ thống nội bộ trực tiếp từ trình duyệt cục bộ. Tài khoản, cookie, phiên làm việc, dữ liệu trang, hành vi sao chép/tải xuống và dấu vết thao tác bị phân tán trên các thiết bị khác nhau. Khi nhân viên gia nhập, đổi vai trò, rời đi hoặc khi cần cấp quyền truy cập tạm thời cho nhà thầu, khách hàng hoặc AI Agent, quản trị viên gặp khó khăn trong việc kiểm soát ai có thể truy cập cái gì, họ sử dụng danh tính nào, có thể nhìn thấy gì, có thể sao chép/tải xuống gì và cách khắc phục sự cố sau này như thế nào. Sa2web được xây dựng để giải quyết vấn đề quản trị truy cập trình duyệt này.
+
+Với Sa2web, người dùng vẫn mở trang web qua trình duyệt của mình, nhưng trang đích thực tế được truy cập bởi trình duyệt từ xa được triển khai trong môi trường được kiểm soát. Quản trị viên có thể cấu hình các trang SaaS, trang nội bộ và không gian làm việc làm các điểm truy cập thống nhất, sau đó cấp quyền tài nguyên cho người dùng khác nhau thông qua nhóm, vai trò và quyền hạn. Script trang đích, cookie, phiên làm việc và môi trường tài khoản vẫn nằm trong các không gian làm việc từ xa, nên thiết bị đầu cuối không cần giữ lại thông tin đăng nhập nhạy cảm lâu dài.
+
+## Sa2web có thể làm gì? {.unnumbered}
+
+Cuốn sách này tập trung vào các khả năng sau:
+
+| Khả năng | Vấn đề được giải quyết |
+|---|---|
+| Cloud Browser | Cung cấp môi trường trình duyệt từ xa được kiểm soát cho nhân viên và giảm thiểu sự khác biệt giữa thiết bị cục bộ và dữ liệu phân tán |
+| Truy cập trang SaaS | Cấu hình các hệ thống website kinh doanh hoặc bên ngoài làm điểm truy cập thống nhất, cho phép quản trị viên đăng nhập trước tài khoản và cấp quyền cho nhân viên sử dụng mà không cần trao đổi trực tiếp thông tin tài khoản |
+| Không gian làm việc (Workspace) | Cố định tài khoản trang, cấu hình trình duyệt và môi trường truy cập; phù hợp cho nhiều tài khoản, cửa hàng, khách hàng và khu vực |
+| Truy cập trang nội bộ (Inner site) | Cho phép nhân viên truy cập hệ thống intranet từ điểm truy cập thống nhất mà không cần phơi bày thiết bị đầu cuối trực tiếp vào mạng nội bộ |
+| Liên kết cộng tác (Collaboration link) | Cung cấp liên kết truy cập có kiểm soát, có thời hạn, được bảo vệ bằng mật khẩu cho khách hàng, nhà thầu, người dùng tạm thời hoặc các tình huống giao hàng |
+| Người dùng, nhóm và quyền hạn | Sử dụng nhóm để quản lý tổ hợp người dùng, trang, không gian làm việc, trang nội bộ, proxy và quyền hạn tính năng |
+| Bảo vệ URL đích (Target URL protection) | Ẩn hoặc mã hóa URL đích thực để giảm việc phơi bày địa chỉ gốc, đường dẫn nội bộ và tham số kinh doanh; phù hợp cho hệ thống nhà cung cấp hoặc hệ thống phải giữ bí mật |
+| Watermark và kiểm soát nội dung nhạy cảm | Kiểm soát trung tâm hiển thị trang, sao chép, tải xuống và các trường nhạy cảm |
+| Ghi âm và phát lại (Recording and replay) | Ghi lại quá trình truy cập quan trọng để kiểm toán, khắc phục sự cố, đào tạo và truy trách |
+| Tùy chỉnh trang và script | Sử dụng script trang, script giao diện, quy tắc kiểm soát trang và các công cụ liên quan để thích ứng các trang kinh doanh phức tạp, cải thiện tương tác cá nhân hóa và tăng hiệu quả |
+| Truy cập MCP / AI | Cho phép các AI client như Codex, Claude Code và Cursor vận hành trình duyệt từ xa trong ranh giới quyền hạn |
+
+Những khả năng này cùng nhau tạo thành một luồng chính: biến "mở một trang web" từ hành động thiết bị cá nhân thành quy trình truy cập trình duyệt của doanh nghiệp có thể được cấp quyền, cô lập, kiểm toán và bàn giao.
+
+## Bạn có thể làm gì sau khi đọc cuốn sách này? {.unnumbered}
+
+Sau khi đọc cuốn sách này, bạn sẽ có thể triển khai môi trường Sa2web có thể sử dụng từ đầu và hoàn thành một vòng lặp quản trị truy cập trình duyệt từ xa phổ biến của doanh nghiệp:
+
+1. Cài đặt Sa2web trên máy chủ Linux và hoàn thành cấu hình cơ bản cho license, máy, trình duyệt và chứng chỉ.
+2. Cho phép nhân viên truy cập Cloud Browser, trang SaaS, trang nội bộ và không gian làm việc.
+3. Sử dụng không gian làm việc để quản lý nhiều tài khoản kinh doanh và môi trường trình duyệt cố định, tránh trộn lẫn tài khoản và trôi dạt môi trường.
+4. Sử dụng liên kết cộng tác để cấp quyền truy cập giới hạn an toàn cho người dùng tạm thời, nhà thầu hoặc khách hàng.
+5. Xây dựng mô hình cấp quyền cơ bản với người dùng, quản trị viên, vai trò, nhóm và quyền hạn.
+6. Bật bảo vệ URL, watermark, giới hạn sao chép/tải xuống, ẩn từ khóa nhạy cảm và ẩn kiểm soát trang cho các trang nhạy cảm.
+7. Bật ghi âm và phát lại cho truy cập kinh doanh quan trọng để tạo bằng chứng thao tác có thể xem lại.
+8. Viết script cho các trang phức tạp để nâng cao trang, xử lý giao diện, che mặt dữ liệu hoặc hỗ trợ tự động hóa.
+9. Cấu hình Sa2web MCP để AI Agent có thể truy cập trang kinh doanh thông qua tài khoản được kiểm soát và phạm vi được cấp phép.
+10. Khắc phục sự cố thường gặp về triển khai, truy cập, chứng chỉ, quyền hạn, MCP và Passkey.
+
+Nói cách khác, mục tiêu của cuốn sách này không chỉ giúp bạn "cài đặt thành công". Mục tiêu là giúp bạn xây dựng một giải pháp truy cập trình duyệt từ xa của doanh nghiệp có thể giao hàng, quản lý, chẩn đoán và phù hợp cho việc sử dụng thực tế của nhóm.
+
+# Cách sử dụng cuốn sách này {.unnumbered}
+
+Đây là một hướng dẫn thực hành được tổ chức theo trình tự bạn thường sử dụng Sa2web.
+
+Nếu bạn lần đầu sử dụng Sa2web, hãy hoàn thành Phần 1 theo thứ tự:
+
+1. Triển khai Sa2web.
+2. Tạo máy và trình duyệt.
+3. Thiết lập truy cập trang SaaS.
+4. Tạo liên kết cộng tác.
+5. Sử dụng không gian làm việc để quản lý nhiều tài khoản.
+6. Kết nối trang nội bộ.
+7. Cấp quyền truy cập bằng nhóm, vai trò và quyền hạn.
+
+Sau đó, chuyển sang các tính năng nâng cao như bảo vệ URL đích, watermark, ghi âm và phát lại, MCP và tùy chỉnh trang.
+
+![Ranh giới vận hành cơ bản của Sa2web](images/01-overview.svg){#fig-overview}
+
+::: {.callout-note}
+Cuốn sách này sử dụng [tài liệu chính thức tiếng Trung của Sa2web](https://www.sa2web.com/docs/en/) làm nguồn thông tin chính, sau đó tổ chức lại nội dung quanh lộ trình thực hành bắt đầu từ con số không. Khi sản phẩm thay đổi, hãy luôn tuân theo tài liệu chính thức và giao diện thực tế của phiên bản bạn đang dùng.
+:::
+
+# Sáu đối tượng cần biết trước {.unnumbered}
+
+| Đối tượng | Vai trò |
+|---|---|
+| Người dùng | Đăng nhập frontend người dùng và truy cập trang, không gian làm việc, trang nội bộ |
+| Máy (Machine) | Chứa môi trường chạy trình duyệt từ xa |
+| Trình duyệt (Browser instance) | Môi trường chạy trình duyệt thực tế truy cập trang SaaS hoặc trang nội bộ |
+| Trang SaaS (SaaS site) | Hệ thống kinh doanh bên ngoài được công khai cho người dùng |
+| Trang nội bộ (Inner site) | Điểm truy cập vào hệ thống nội bộ doanh nghiệp |
+| Không gian làm việc (Workspace) | Điểm truy cập cố định tài khoản trang, môi trường trình duyệt và cấu hình |
+
+Trong cấp quyền thực tế của doanh nghiệp, **nhóm** thường kết hợp người dùng, trang, không gian làm việc, trang nội bộ, agent và quyền hạn.
+
+Tài liệu chính thức:
+
+- https://www.sa2web.com/docs/en/concepts

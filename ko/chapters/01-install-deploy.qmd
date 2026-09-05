@@ -1,0 +1,309 @@
+# 설치 및 배포
+
+## 목표
+
+Linux x86_64 서버에서 Docker와 Docker Compose를 준비하고, Sa2web 설치 패키지를 다운로드하여 첫 설치를 완료하고, 최소 사용 가능 구성 마무리: 라이선스 등록, 머신 추가, 브라우저 추가, 그룹 권한 부여, 마지막으로 일반 사용자 프론트엔드에서 클라우드 브라우저 열기.
+
+Sa2web의 기본 공식 요구 사항: 1 CPU 코어 이상, 4 GB 메모리 권장 (최소 2 GB), Linux x86_64, Docker 명령 실행 가능.
+
+이 가이드는 예제로 **Ubuntu 24.04 LTS x86_64**를 사용합니다.
+
+## Ubuntu 서버 준비
+
+권장 최소 준비 사항:
+
+| 항목 | 권장 사항 |
+|---|---|
+| 운영 체제 | Ubuntu 24.04 LTS x86_64 |
+| CPU | 테스트와 실제 사용을 위해 2 코어 이상 권장 |
+| 메모리 | 4 GB 이상 |
+| 권한 | root 또는 sudo |
+| 네트워크 | 서버가 Docker 이미지 소스에 도달 가능, 클라이언트가 서버에 도달 가능 |
+| 도메인 이름 | 공개 배포 시, 서버의 공용 IP로 확인되는 도메인 이름 준비 |
+
+설치 전 서버 주소 확인:
+
+| 주소 | 목적 | 예시 |
+|---|---|---|
+| 프라이빗 IP | Sa2web 서비스와 keeper/브라우저 구성 요소 간 통신 | `192.168.1.111` |
+| 퍼블릭 IP | 외부 사용자 접근 진입점 | `203.0.113.10` |
+| 도메인 이름 | 프로덕션 HTTPS 인증서 및 접근 주소 | `browser.example.com` |
+
+::: {.callout-warning}
+Sa2web은 현재 서버 배포를 위해 Linux x86_64를 필요로 합니다. Windows, macOS, ARM64는 현재 공식적으로 지원되는 배포 환경의 일부가 아닙니다.
+:::
+
+::: {.callout-tip}
+LAN에서만 테스트하는 경우, 퍼블릭 IP와 도메인 필드 둘 다에 임시로 프라이빗 IP를 사용할 수 있습니다. 접근 주소는 `https://192.168.1.105/`처럼 보일 것입니다. 브라우저 주소 표시줄에서 인증서가 안전하지 않다고 경고하면 @sec-safe-cert를 참조하세요.
+:::
+
+## Docker와 Docker Compose 설치
+
+Docker는 현재 apt 리포지토리를 통해 Docker Engine 설치를 권장합니다.
+
+```bash
+sudo apt update
+sudo apt install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+  -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
+
+리포지토리 추가:
+
+```bash
+sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<EOF2
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF2
+
+sudo apt update
+```
+
+설치:
+
+```bash
+sudo apt install -y \
+  docker-ce docker-ce-cli containerd.io \
+  docker-buildx-plugin docker-compose-plugin
+```
+
+확인:
+
+```bash
+docker --version
+docker compose version
+sudo docker ps
+```
+
+비-root 사용자의 경우, 현재 사용자를 `docker` 그룹에 추가:
+
+```bash
+sudo usermod -aG docker $USER
+```
+
+터미널에 다시 로그인한 후 실행:
+
+```bash
+docker ps
+```
+
+## Sa2web 설치 패키지 다운로드
+
+Sa2web 웹사이트 열기:
+
+```text
+https://www.sa2web.com
+```
+
+상단의 **다운로드** 메뉴를 클릭하여 다운로드 페이지를 연 다음, 팀 에디션이나 엔터프라이즈 에디션 등 필요한 버전을 선택합니다.
+
+로그인하지 않은 경우 다운로드 전에 계정 생성 또는 로그인을 요청받습니다. 아직 계정이 없는 경우 새로 등록합니다:
+
+1. 이메일 주소 입력.
+2. 사용할 비밀번호 입력.
+3. 확인을 위해 비밀번호 다시 입력.
+4. 인증 코드 받기 클릭.
+5. 이메일 확인 후 코드 입력.
+6. 약관 동의.
+7. 계정 생성 클릭.
+
+계정 생성 후 다운로드 페이지로 돌아가 대상 버전을 다시 클릭합니다. 브라우저가 설치 패키지를 다운로드합니다.
+
+::: {.callout-note}
+패키지 이름은 버전에 따라 변경됩니다. 이 가이드에서는 실제 다운로드된 파일 이름을 나타내기 위해 `browser_team_x.y.z.tar.gz` 또는 `browser_full_x.y.z.tar.gz`를 사용합니다.
+:::
+
+## 패키지 업로드 및 압축 해제
+
+로컬 컴퓨터에서 서버로 패키지를 업로드합니다. `scp`, 서버 제어판, 베스천 호스트, SFTP 도구, 클라우드 제공업체 콘솔을 사용할 수 있습니다.
+
+예시:
+
+```bash
+scp browser_team_x.y.z.tar.gz root@192.168.1.105:/opt/
+```
+
+서버에 로그인하고, 업로드 디렉토리로 이동하여 패키지 압축을 풉니다:
+
+```bash
+ssh root@192.168.1.105
+
+cd /opt
+tar -xzf browser_team_x.y.z.tar.gz
+cd browser_team_x.y.z
+```
+
+Full 버전을 다운로드한 경우, 파일과 디렉토리 이름을 실제 이름으로 바꿉니다:
+
+```bash
+tar -xzf browser_full_x.y.z.tar.gz
+cd browser_full_x.y.z
+```
+
+## 설치 스크립트 실행
+
+압축 해제된 디렉토리에 진입한 후 설치 프로그램을 실행합니다:
+
+```bash
+# 설치 스크립트 실행
+chmod +x install.sh
+sh install.sh
+```
+
+설치 프로그램은 배포 매개변수를 하나씩 묻습니다. 다음 표를 미리 작성하고 설치 중에 값을 입력하세요.
+
+| 프롬프트 | 권장 사항 |
+|---|---|
+| 설치 디렉토리 | 가능하면 기본값 사용. 커스터마이징하는 경우 전용 디렉토리 사용하고 현재 사용자에게 충분한 권한이 있거나 sudo 권한이 있는지 확인. |
+| 서버 프라이빗 IP | 서버의 프라이빗 주소 입력, 예: `192.168.1.105` |
+| 서버 퍼블릭 IP | 공개 배포 시 퍼블릭 IP 입력. LAN 배포 시 같은 프라이빗 IP 입력 |
+| 도메인 이름 | 도메인이 있으면 본인 것 사용. 없으면 퍼블릭 IP 또는 프라이빗 IP 사용 |
+| 시스템 이름 | 브라우저 페이지에 표시되는 시스템 이름, 예: `Sa2web Demo` |
+| `system` 사용자 비밀번호 | 강력한 비밀번호 설정. Enter를 바로 누르면 기본 비밀번호 `abc123456` 사용 |
+| 인증서 생성 옵션 | 공개 도메인 인증서 자동 요청은 `1`, 자체 서명 인증서는 `2`, 자체 인증서 파일 사용은 `3` 선택 |
+
+시나리오별 인증서 옵션:
+
+| 옵션 | 시나리오 |
+|---|---|
+| `1` | 서버가 공용 인터넷에 배포되고, 도메인이 이미 이 서버로 확인되며, 무료 HTTPS 인증서를 자동으로 얻고 싶을 때 |
+| `2` | LAN 테스트, 도메인 이름 없음, 또는 임시 IP 기반 접근 |
+| `3` | 조직에 이미 인증서가 있어 자체 인증서 파일 사용 필요할 때 |
+
+::: {.callout-note}
+LAN 배포를 위해 옵션 `2`를 선택할 때, 브라우저 주소 표시줄에 보안 경고를 표시하고 싶지 않다면 @sec-free-cert와 @sec-safe-cert를 참조하세요.
+:::
+
+스크립트가 불확실한 고급 질문을 계속하는 경우, 첫 테스트를 위해 기본값을 사용하려면 Enter를 누르세요. 스크립트는 오프라인 이미지를 로드하고, `docker-compose.yml`을 생성하고, 구성을 작성하고, 컨테이너를 시작합니다.
+
+::: {.callout-warning}
+프로덕션에서 기본 비밀번호 `abc123456`을 유지하지 마세요. 설치 중 빠른 테스트를 위해 Enter를 눌렀더라도, 첫 로그인 후 즉시 `system` 비밀번호를 변경하고 백업 관리자를 생성하세요.
+:::
+
+공개 배포의 경우 네트워크 설정에서 다음 포트도 여세요:
+
+| 포트 | 목적 |
+|---|---|
+| 443(tcp), 80(tcp) | HTTP(S) 접근 기본 포트 |
+| 3478(tcp,udp) | WebRTC 통신에 필수. 필요에 따라 49160-49200 같은 추가 UDP 포트 열기 |
+
+## Sa2web 첫 방문
+
+설치 후 브라우저에서 배포 주소를 엽니다:
+
+```text
+https://<APP_DOMAIN>/
+```
+
+예시:
+
+```text
+https://192.168.1.105/
+https://browser.example.com/
+```
+
+관리자 콘솔 로그인 주소는 보통:
+
+```text
+https://<APP_DOMAIN>/admin/login
+```
+
+설치 중 구성된 `system` 사용자와 비밀번호로 로그인합니다. 페이지 프롬프트에 따라 인증 코드를 입력합니다. @fig-admin-login 참조.
+
+![Sa2web 관리자 콘솔 로그인](/images/admin-login.png){#fig-admin-login}
+
+## 라이선스 등록
+
+관리자 콘솔에 로그인한 후 라이선스 등록 대화상자를 엽니다. @fig-register-license 참조.
+
+![Sa2web 라이선스 등록](/images/register-license.png){#fig-register-license}
+
+그런 다음 Sa2web 웹사이트로 돌아갑니다:
+
+```text
+https://www.sa2web.com
+```
+
+**내** 페이지를 열고 계정 센터에서 무료 라이선스를 받습니다. 페이지에서 `license`와 `key`를 복사하여 관리자 콘솔의 라이선스 등록 대화상자에 붙여넣고 저장합니다. @fig-get-license 참조.
+
+![Sa2web 웹사이트에서 라이선스 받기](/images/get-license.png){#fig-get-license}
+
+::: {.callout-note}
+무료 라이선스는 보통 학습, 검증, 소규모 시험에 적합합니다. 일부 고급 기능은 UI에 나타날 수 있지만 라이선스 유형에 따라 효과가 없을 수 있습니다.
+:::
+
+## 서비스 상태 및 로그
+
+컨테이너 상태 보기:
+
+```bash
+docker compose -f <설치-디렉토리>/docker-compose.yml ps
+```
+
+애플리케이션 로그 보기:
+
+```bash
+tail -n 200 <설치-디렉토리>/logs/app/app.log
+```
+
+또는 Docker Compose 로그 보기:
+
+```bash
+docker compose -f <설치-디렉토리>/docker-compose.yml logs --tail 200 --follow
+```
+
+## 로컬 브라우저 및 SSL 인증서
+
+### 자체 도메인으로 공개 배포된 Sa2web {#sec-free-cert}
+
+1. 도메인 공급자(예: Cloudflare)에서 도메인 DNS 레코드를 Sa2web이 배포된 서버의 IP 주소로 지정합니다.
+2. Sa2web 서버의 네트워크 설정에서 포트 80과 443을 엽니다.
+3. 사용자가 처음 `https://<도메인>/`을 방문하면, Sa2web의 Caddy 서비스가 Let's Encrypt에서 신뢰할 수 있는 인증서를 자동으로 요청합니다. 사용자 브라우저는 더 이상 안전하지 않은 인증서 경고를 표시하지 않습니다.
+
+### Caddy 자체 서명 인증서로 LAN에 배포된 Sa2web {#sec-safe-cert}
+
+1. 먼저 인증서를 얻습니다. `$INSTALL_PATH/data/caddy/pki/authorities/local/root.crt`에서 `root.crt`를 얻어 사용자에게 설치를 위해 보낼 수 있습니다. 또는 사용자가 왼쪽 하단 팝업 메뉴를 클릭하고, **내 기기**를 클릭한 다음, **인증서 다운로드**를 클릭합니다. @fig-down-cert 참조.
+
+![Sa2web 루트 인증서 다운로드](/images/down-cert.png){#fig-down-cert}
+
+2. 인증서 다운로드 후, 신뢰할 수 있는 루트 인증서 저장소에 설치합니다. @fig-install-root-cert 참조.
+
+![Sa2web 루트 인증서 설치](/images/install-root-cert.png){#fig-install-root-cert}
+
+3. 인증서 설치 후 브라우저를 종료하고 다시 엽니다. 다시 방문하면 브라우저는 더 이상 안전하지 않은 인증서 경고를 표시하지 않습니다. @fig-safe-cert 참조.
+
+![Sa2web 신뢰할 수 있는 인증서](/images/safe-cert.png){#fig-safe-cert}
+
+일반 체크포인트:
+
+| 문제 | 확인 사항 |
+|---|---|
+| 페이지를 열 수 없음 | 보안 그룹, 방화벽, DNS 해결, 인증서 모드 |
+| 로그인 실패 | `system` 비밀번호 및 인증 코드 |
+| 머신 오프라인 | 머신 IP, 포트 `7000`, 컨테이너 상태 |
+| 브라우저 시작 안 됨 | Docker Compose 로그 및 머신 상태 |
+| 격리 네트워크 사용 불가 | 브라우저 프록시 구성 및 그룹이 해당 격리 네트워크에 권한이 있는지 |
+
+## 수락 체크리스트
+
+- [ ] Docker 작동함.
+- [ ] `docker compose` 작동함.
+- [ ] Sa2web 설치 프로그램이 성공적으로 완료됨.
+- [ ] 배포 주소 `https://<APP_DOMAIN>/` 접근 가능.
+- [ ] `/admin/login` 접근 가능.
+- [ ] `system` 사용자가 관리자 콘솔에 로그인 가능.
+- [ ] 라이선스 등록됨.
+- [ ] 기본 비밀번호 변경됨.
+
+참고:
+
+- https://www.sa2web.com/docs/en/install/prerequisites
+- https://www.sa2web.com/docs/en/install/deploy
+- https://docs.docker.com/engine/install/ubuntu/

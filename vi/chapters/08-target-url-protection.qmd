@@ -1,0 +1,59 @@
+# Bảo vệ URL Mục tiêu (Target URL Protection)
+
+## Mục tiêu
+
+Bật **Mã hóa URL (Encrypted URL)** để ngăn frontend user hiển thị trực tiếp địa chỉ gốc thực.
+
+## Tình huống Phù hợp
+
+- Cổng nhà cung cấp.
+- Kênh mua sắm đặc biệt.
+- Backend khách hàng.
+- Hệ thống nội bộ.
+- SaaS riêng tư.
+- Địa chỉ gốc mà user cộng tác không nên biết trực tiếp.
+
+## Bật Mã hóa URL
+
+Đi đến:
+
+```text
+Quản lý trang > Danh sách trang
+Quản lý trang > Danh sách trang nội bộ
+```
+
+Tìm trang hoặc trang nội bộ mục tiêu và nhấn nút "![](/images/site-config.png){width=22px}" để vào trang cấu hình trang hoặc trang nội bộ, như hình @fig-encrypt-url-checked:
+
+1. Bật **Mã hóa URL (Encrypted URL)**.
+2. Lưu.
+3. Truy cập lại với tài khoản test.
+4. Xác minh frontend user không còn hiển thị trực tiếp địa chỉ gốc.
+
+![Sa2web enable Encrypted URL](/images/encrypt-url-checked.png){#fig-encrypt-url-checked}
+
+Khi user truy cập trang có bật mã hóa URL từ frontend, kết quả như hình @fig-encrypted-url.
+
+![Sa2web encrypted URL](/images/encrypted-url.png){#fig-encrypted-url}
+
+Mở công cụ dev trình duyệt và kiểm tra source. Địa chỉ liên kết cũng bị mã hóa, như hình @fig-encryped-url-hrefs.
+
+![Sa2web encrypted link](/images/encryped-url-hrefs.png){#fig-encryped-url-hrefs}
+
+## Kết hợp với Liên kết Cộng tác
+
+Luồng khuyến nghị:
+
+```text
+Nội dung cộng tác
+  ->
+Trang SaaS
+  ->
+Mã hóa URL
+  ->
+Liên kết cộng tác
+```
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Frontend user không hiển thị trực tiếp URL thực.
+- [ ] Trình duyệt từ xa mở trang bình thường.

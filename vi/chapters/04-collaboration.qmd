@@ -1,0 +1,107 @@
+# Bật Liên kết Cộng tác (Collaboration Link)
+
+## Mục tiêu
+
+Tạo liên kết truy cập được kiểm soát cho user tạm thời, nhà thầu hoặc khách hàng để họ truy cập trang được chỉ định mà không cần tài khoản thông thường.
+
+## Tạo Nội dung Cộng tác
+
+Đi đến:
+
+```text
+Quản lý nội dung cộng tác > Danh sách nội dung cộng tác
+```
+
+Tạo bộ sưu tập nội dung cộng tác, như hình @fig-create-collaboration-content, và điền số bộ sưu tập, tiêu đề và thời hạn hiệu lực.
+
+![Sa2web create collaboration collection](/images/create-collaboration-content.png){#fig-create-collaboration-content}
+
+Nhấn nút "![](/images/plus.png){width=20px}" để thêm trang SaaS cộng tác và danh mục tài khoản trang, như hình @fig-add-collaboration-content. Một bộ sưu tập nội dung cộng tác có thể chứa nhiều danh mục tài khoản trang.
+
+![Sa2web add collaboration SaaS site](/images/add-collaboration-content.png){#fig-add-collaboration-content}
+
+Danh sách nội dung cộng tác hiển thị như hình @fig-collaboration-content-list.
+
+![Sa2web collaboration content list](/images/collaboration-content-list.png){#fig-collaboration-content-list}
+
+## Tạo Liên kết Cộng tác Tiêu chuẩn
+
+Đi đến:
+
+```text
+Quản lý nội dung cộng tác > Danh sách liên kết cộng tác
+```
+
+Nhấn nút "![](/images/add-collaboration-url.png){width=80px}" để mở hộp thoại thêm liên kết cộng tác, như hình @fig-add-collaboration-url-dialog.
+
+Trong hộp thoại, chọn:
+
+- Bộ sưu tập nội dung cộng tác.
+- Thể hiện trình duyệt.
+- Trang cộng tác ban đầu để mở.
+- Đường dẫn trang cộng tác, phải bắt đầu bằng `/`.
+- Có bật mật khẩu truy cập cộng tác không.
+
+![Sa2web add collaboration link](/images/add-collaboration-url-dialog.png){#fig-add-collaboration-url-dialog}
+
+Sau khi thêm, liên kết xuất hiện trong danh sách liên kết cộng tác, như hình @fig-collaboration-url-list.
+
+![Sa2web collaboration link list](/images/collaboration-url-list.png){#fig-collaboration-url-list}
+
+Trong danh sách, nhấn nút "![](/images/link.png){width=20px}" để copy liên kết cộng tác vào clipboard. Sau đó bạn có thể gửi cho user tạm thời, nhà thầu hoặc khách hàng.
+
+Nhấn nút "![](/images/key.png){width=20px}" để bật truy cập bằng mật khẩu và xem mật khẩu của liên kết. Sau khi user tạm thời mở liên kết, họ phải nhập mật khẩu để tiếp tục, như hình @fig-collaboration-url-password.
+
+![Sa2web collaboration link with password input](/images/collaboration-url-password.png){#fig-collaboration-url-password}
+
+Nhấn nút "![](/images/unlock.png){width=20px}" để tắt truy cập bằng mật khẩu.
+
+Định dạng liên kết cộng tác tiêu chuẩn:
+
+```text
+https://<APP_DOMAIN>/url/<uid>
+```
+
+Liên kết cộng tác tiêu chuẩn phù hợp cho một user, truy cập một lần hoặc phân phối quy mô nhỏ.
+
+## Liên kết Cộng tác Siêu cấp (Super Collaboration Link)
+
+Nếu một liên kết cần hỗ trợ nhiều user truy cập cùng lúc hoặc theo lô, dùng liên kết cộng tác siêu cấp:
+
+```text
+https://<APP_DOMAIN>/urls/<collSn>
+```
+
+Trong danh sách liên kết cộng tác, nhấn nút "![](/images/super-collaboration-url.png){width=90px}" để mở trang liên kết cộng tác siêu cấp.
+
+Nhấn **Thêm** để mở hộp thoại thêm liên kết cộng tác siêu cấp, như hình @fig-add-super-collaboration-url. Bạn có thể cấu hình:
+
+- Bộ sưu tập nội dung cộng tác.
+- Số lượng user cộng tác được phép truy cập.
+- Trang cộng tác ban đầu để mở.
+- Đường dẫn trang cộng tác, phải bắt đầu bằng `/`.
+- Có bật mật khẩu truy cập cộng tác không.
+
+![Sa2web add super collaboration link](/images/add-super-collaboration-url-dialog.png){#fig-add-super-collaboration-url}
+
+Sau khi thêm, liên kết xuất hiện trong danh sách liên kết cộng tác siêu cấp, như hình @fig-super-collaboration-url-list.
+
+![Sa2web super collaboration link list](/images/super-collaboration-url-list.png){#fig-super-collaboration-url-list}
+
+Liên kết cộng tác siêu cấp phù hợp cho phân phối hàng loạt, giao hàng cho khách hàng, sự kiện và tình huống tương tự.
+
+## Danh sách Kiểm tra Trước khi Xuất bản
+
+- [ ] Liên kết mở bình thường.
+- [ ] Chỉ công khai các trang cần thiết.
+- [ ] Loại tài khoản đúng.
+- [ ] Chính sách truy cập mật khẩu phù hợp với tình huống hiện tại.
+- [ ] Thời gian hết hạn và số lượng user cho phép đúng.
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] Liên kết mở bình thường.
+- [ ] Chỉ các trang cần thiết được công khai.
+- [ ] Loại tài khoản chính xác.
+- [ ] Chính sách mật khẩu phù hợp.
+- [ ] Thời hạn và số lượng user cho phép chính xác.

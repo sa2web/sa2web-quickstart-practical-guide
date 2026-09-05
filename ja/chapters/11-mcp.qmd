@@ -1,0 +1,135 @@
+# Sa2web MCPアクセスの有効化
+
+## 目標
+
+Codex、Claude Code、CursorなどのMCP対応AIクライアントが、Sa2webリモートブラウザを読み取り操作できるようにします。
+
+## 準備
+
+- Node.js 20+。
+- `@sa2web/mcp` をインストール。
+- エージェントログインURLを準備。
+- エージェントアカウントが必要なSaaS、ワークスペース、内部サイト、プロキシ権限を持っていること。
+
+エージェントログインURL内の `clientId` と `clientSecret` はシークレットとして扱う必要があります。
+
+## インストール
+
+```bash
+npm install @sa2web/mcp -g
+npx playwright install --with-deps
+```
+
+インストール後、以下のコマンドが利用可能：
+
+```text
+sa2
+sa2-browser
+sa2-mcp
+```
+
+## エージェントユーザーの作成
+
+以下に移動：
+
+```text
+ユーザー管理 > エージェント一覧
+```
+
+新しいエージェントユーザー（例：`mcp-agent`）を追加し、保存。@fig-add-agentを参照。
+
+![Sa2webエージェントユーザー追加](/images/add-agent.png){#fig-add-agent}
+
+ここでのデフォルトパスワードは `https://<APP_DOMAIN>/app/login` での手動フロントエンドログイン用。ユーザー一覧でエージェントユーザーを見つけるか、フロントエンドにログインしてそこで変更可能。エージェントユーザー名はデフォルトで `a` で始まる。
+
+ユーザー追加後、エージェントユーザー一覧で確認可能。@fig-agent-listを参照。
+
+![Sa2webエージェントユーザー一覧](/images/agent-list.png){#fig-agent-list}
+
+その後、MCPクライアント設定用にエージェントユーザーの `clientId` と `clientSecret` をコピー。"![](/images/copy-agent-url.png){width=90px}" ボタンをクリックしてログインURLをコピーすることも可能。URLは以下のようになる：
+
+```text
+https://192.168.1.105/agent/login?clientId=6d0593b03fa748aa8dee7452ef6221c8&clientSecret=d985786d946e4826aadd07d579c59b06bf41a32aff4a415f8981070915d940a9
+```
+
+これには `clientId` と `clientSecret` が含まれているため、MCPクライアント設定で直接使用可能。
+
+## エージェントユーザーの認可
+
+以下に移動：
+
+```text
+ユーザー管理 > グループ一覧
+```
+
+グループ一覧ページで新しいグループ（例：`agent`）を作成。@fig-agent-groupを参照。**ユーザー** をクリックし、`mcp-agent` などのエージェントユーザーをグループに追加して保存。その後、グループに必要なSaaS、ワークスペース、内部サイト、プロキシ、その他の権限を認可。
+
+![Sa2webエージェントグループ](/images/agent-group.png){#fig-agent-group}
+
+新しいブラウザでエージェントログインURLを開く。例：`https://192.168.1.105/agent/login?clientId=6d0593b03fa748aa8dee7452ef6221c8&clientSecret=d985786d946e4826aadd07d579c59b06bf41a32aff4a415f8981070915d940a9`。Sa2webホームページにリダイレクトされる。@fig-agent-auto-loginを参照。エージェントの認可済みコンテンツが正しいか確認。
+
+![Sa2webエージェント自動ログインページ](/images/agent-auto-login.png){#fig-agent-auto-login}
+
+## MCPクライアント設定
+
+使用するAIエージェントクライアントが要求する形式で設定を記述。例：
+
+```json
+{
+  "mcpServers": {
+    "sa2-remote-browser": {
+      "command": "sa2-mcp",
+      "env": {
+        "SA2_LOGIN_URL": "https://<APP_DOMAIN>/agent/login?clientId=...&clientSecret=...",
+        "SA2_LOGIN_REDIRECT_PATH": "/app/login",
+        "SA2_HEADLESS": "false",
+        "SA2_IGNORE_HTTPS_ERRORS": "true"
+      }
+    }
+  }
+}
+```
+
+以下の例ではCodexデスクトップを使用してSa2web MCPの追加方法を示す。Codexの `settings` メニューをクリックし、設定画面を開く。@fig-codex-add-mcpを参照。`Plugins` を見つけ、プラグインページを開き、**MCPサーバー追加** をクリック。
+
+![CodexでのSa2web MCP追加](/images/codex-add-mcp.png){#fig-codex-add-mcp}
+
+次に、このMCPを試す。以下のプロンプトを入力してSa2web MCPを使用し、ワークスペースサイトをブラウズしてコンテンツを収集：
+
+```text
+Open the workspace 'demo2' using sa2-remote-browser, collect the main content of the page, and summarize it.
+```
+
+メッセージ送信後、Codexが `sa2-remote-browser` を使用してSa2webターゲットサイトにアクセスし、コンテンツを収集。@fig-mcp-demoを参照。
+
+![CodexでのSa2web MCPデモ結果](/images/mcp-demo.png){#fig-mcp-demo}
+
+::: {.callout-warning}
+実際の `clientSecret` 値を公開Gitリポジトリ、スクリーンショット、公開チケットにコミットしないでください。
+:::
+
+## AI権限
+
+AIアカウントは依然としてSa2web権限システムによって制御されます。必要なもののみ付与：
+
+- SaaSサイト。
+- ワークスペース。
+- 内部サイト。
+- ネットワーク/プロキシアクセス。
+- その他必要な権限。
+
+公式ドキュメントによると、ターゲットサイトは `iframe#rbi-frame` に位置し、MCPサーバーがPlaywrightを通じてそのiframeを制御し、エージェントはターゲットWebサイトに直接アクセスしません。
+
+::: {.callout-warning}
+AIが営業秘密やプライベートデータを暴露するリスクを減らすため、バックエンドでサイトのターゲットURL保護を事前に有効化し、SaaSアカウント情報、企業秘密URL、機密キーワードを隠蔽またはブロックしてください。
+:::
+
+## 受け入れチェックリスト
+
+- [ ] `sa2-mcp` が `PATH` にある。
+- [ ] MCPクライアントがそれを起動できる。
+- [ ] AIが認可されたリソースのみを見られ、企業秘密や隠すべき情報が隠されている。
+
+参考：
+
+- https://www.sa2web.com/docs/en/appendix/mcp

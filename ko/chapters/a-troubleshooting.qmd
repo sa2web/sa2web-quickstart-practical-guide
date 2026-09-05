@@ -1,0 +1,35 @@
+# FAQ 및 문제 해결
+
+## 관리자 콘솔 열리지 않음
+
+```bash
+docker compose ps
+docker compose logs --tail 200
+```
+
+도메인, 포트 80/443, 인증서, 애플리케이션 로그 확인.
+
+## 사용자 SaaS 사이트 못 봄
+
+순서대로 확인: 사이트 상태 -> 사용자 그룹 -> SaaS 사이트 승인 -> 계정 유형.
+
+## 사용자 워크스페이스 못 봄
+
+그룹 내 워크스페이스 승인 확인.
+
+## 내부 사이트 열리지 않음
+
+1. 타겟 URL이 Sa2web 브라우저 노드 있는 네트워크에서 도달 가능한지 먼저 확인, 그 후 DNS, 라우트, 방화벽, ACL 확인.
+2. 그룹 내 내부 사이트 승인 확인.
+
+## MCP 연결 안 됨
+
+Node.js, `@sa2web/mcp`, Playwright, `SA2_LOGIN_URL`, clientId/clientSecret, 에이전트 권한, HTTPS 확인.
+
+## 패스키 실패
+
+타겟 도메인, HTTPS 신뢰, 브라우저 오리진, 패스키 바인딩 상태, 타겟 사이트 호환성 먼저 확인.
+
+공식 문서:
+
+- https://www.sa2web.com/docs/en/operations/troubleshooting

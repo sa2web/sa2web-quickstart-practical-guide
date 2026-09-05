@@ -1,0 +1,100 @@
+# Quản lý User và Quyền hạn
+
+## Mục tiêu
+
+Xây dựng hệ thống user, quản trị viên, vai trò, quyền hạn và nhóm để truy cập frontend và quản trị backend có thể được cấp quyền theo trách nhiệm.
+
+## Tạo User
+
+Đi đến:
+
+```text
+Quản lý User > Danh sách User
+```
+
+Trang danh sách user hiển thị, như hình @fig-user-list.
+
+![Sa2web user list](/images/user-list.png){#fig-user-list}
+
+Danh sách user chủ yếu chứa hai loại user: user thông thường và user cộng tác. User thông thường có thể đăng nhập trực tiếp frontend Sa2web. User cộng tác được tạo tự động bởi liên kết cộng tác. Tên user của họ thường bắt đầu bằng `v` và họ không thể vào frontend Sa2web qua trang đăng nhập thông thường.
+
+Nhấn **Thêm User** để mở hộp thoại thêm user, như hình @fig-add-user, và điền tên user, biệt danh, email, số điện thoại, mật khẩu, loại user và trạng thái.
+
+![Sa2web add user](/images/add-user.png){#fig-add-user}
+
+User thông thường có thể đăng nhập tại:
+
+```text
+https://<sa2web-domain>
+```
+
+hoặc:
+
+```text
+https://<sa2web-domain>/app/login
+```
+
+## Tạo Quản trị viên và Vai trò
+
+Đi đến:
+
+```text
+Quản lý User > Danh sách Admin
+Quản lý User > Danh sách Vai trò
+Quản lý User > Danh sách Quyền hạn
+```
+
+Tạo vai trò theo trách nhiệm. Đừng để mọi quản trị viên dùng đặc quyền cao nhất lâu dài.
+
+### Thêm Vai trò
+
+Mở danh sách vai trò, như hình @fig-role-list. Nhấn **Thêm Vai trò**, nhập tên vai trò và lưu.
+
+![Sa2web role list](/images/role-list.png){#fig-role-list}
+
+### Thêm Quản trị viên
+
+Mở danh sách admin và nhấn **Thêm Admin**. Hộp thoại thêm admin xuất hiện, như hình @fig-add-admin. Điền tên user, mật khẩu, email, số điện thoại, trạng thái và vai trò được gán.
+
+![Sa2web add administrator](/images/add-admin.png){#fig-add-admin}
+
+### Quản lý Quyền hạn
+
+Mở danh sách quyền hạn, như hình @fig-permission-management. Chọn vai trò và chọn quyền hạn cần thiết cho vai trò đó. Nhấn **Lưu Quyền hạn** ở góc dưới bên phải để lưu.
+
+![Sa2web permission management](/images/permission-management.png){#fig-permission-management}
+
+### Vô hiệu hóa Quản trị viên và User
+
+Trong danh sách admin hoặc danh sách user, nhấn **Sửa** và đổi trạng thái user thành **Không hoạt động (Inactive)**.
+
+## Quản lý Tài nguyên Frontend bằng Nhóm
+
+Một nhóm có thể quản lý tập trung các tài nguyên hiển thị trên frontend, như hình @fig-group-management-2:
+
+- User.
+- Trang SaaS.
+- Không gian làm việc.
+- Trang nội bộ.
+- Quyền hạn.
+- Proxy Cloud Browser.
+- Mạng cô lập Cloud Browser.
+
+![Sa2web group management](/images/group-management-2.png){#fig-group-management-2}
+
+Tạo nhóm dựa trên nhu cầu kinh doanh thực tế, ví dụ:
+
+```text
+Đội vận hành
+Đội hỗ trợ khách hàng
+Đội tài chính chỉ đọc
+Đội cộng tác nhà thầu
+Đội dự án Khách hàng A
+```
+
+## Danh sách Kiểm tra Chấp nhận
+
+- [ ] User thông thường không thể vào admin console.
+- [ ] Quản trị viên chỉ có quyền hạn theo trách nhiệm.
+- [ ] Tài nguyên user được quản lý qua nhóm.
+- [ ] Trang không được cấp quyền là vô hình.

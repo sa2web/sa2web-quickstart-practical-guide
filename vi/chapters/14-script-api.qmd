@@ -1,0 +1,729 @@
+# Sử dụng Script API {#sec-script-api}
+
+## Mục tiêu
+
+Mô tả khả năng `window.api` có sẵn cho script trang Sa2web và script chặn giao diện tiêu chuẩn, để script trong cấu hình trang, cấu hình trang nội bộ, cấu hình tài khoản và script plugin có thể được viết tin cậy hơn.
+
+Script API có năm danh mục chính:
+
+| API | Mục đích |
+|---|---|
+| `api.config` | Đọc cấu hình tùy chỉnh; hiện chỉ hợp lệ dưới liên kết cộng tác |
+| `api.http` | Gửi yêu cầu HTTP bỏ qua hạn chế CORS trang |
+| `api.user` | Đọc và ghi dữ liệu theo phạm vi user, trang, tài khoản hoặc thiết bị |
+| `api.dom` | Truy vấn DOM, kiểm tra hiển thị, lắng nghe thay đổi phần tử và tạo overlay |
+| `api.utils` | Chờ điều kiện và chạy JavaScript trong trang |
+| `api.header()` | Đọc header yêu cầu hoặc phản hồi đã ghi |
+
+Script trang và script chặn giao diện tiêu chuẩn có thể dùng `window.api`. Script SSE chỉ đảm bảo `data` được truyền vào và thường không phụ thuộc `window.api`.
+
+## Cấu trúc Tổng thể
+
+Trong script, bạn có thể dùng `api` trực tiếp hoặc truy cập qua `window.api`:
+
+```ts
+interface Window {
+  api: {
+    user: UserApi;
+    config: Record<string, unknown>;
+    http: HttpApi;
+    dom: DomApi;
+    utils: UtilsApi;
+    header(headerName: string, isRequestHeader: boolean): Promise<string | string[] | undefined>;
+  };
+}
+```
+
+Ví dụ:
+
+```js
+const apiBase = api.config.apiBase;
+const userToken = await api.user.get('token');
+const submit = api.dom.querySelector(document, 'button[type="submit"]');
+const profile = await api.http.ajax({ url: `http://192.168.1.111:8080/profile` });
+```
+
+::: {.callout-tip}
+Ưu tiên dùng công cụ truy vấn `api.dom` của Sa2web trong script. Chúng hỗ trợ cả CSS selector và XPath selector, làm cho chúng phù hợp hơn cho trang kinh doanh phức tạp so với `document.querySelector()` đơn lẻ.
+:::
+
+## `api.config`
+
+`api.config` đọc cấu hình tùy chỉnh từ môi trường script trang.
+
+```ts
+config: Record<string, unknown>
+```
+
+Ví dụ:
+
+```js
+const apiBase = api.config.apiBase;
+const featureEnabled = api.config.featureEnabled === true;
+```
+
+## `api.http`
+
+`api.http` cung cấp công cụ yêu cầu HTTP cho script user. `api.http.ajax` thực thi yêu cầu thực tế trong tiến trình chính trình duyệt, nên nó không bị hạn chế bởi chính sách CORS của trang.
+
+### `api.http.ajax(options)`
+
+Gửi yêu cầu HTTP.
+
+```ts
+ajax(options: {
+  url: string;
+  method?: string;
+  data?: any;
+  headers?: Record<string, string>;
+  timeout?: number;
+  dataType?: 'json' | 'text' | 'html' | 'arrayBuffer';
+  contentType?: string;
+  processData?: boolean;
+}): Promise<{
+  ok: boolean;
+  status: number;
+  statusText: string;
+  data?: any;
+  error?: string;
+  timeout?: boolean;
+}>
+```
+
+Tham số:
+
+| Tùy chọn | Kiểu | Mặc định | Mô tả |
+|---|---|---|---|
+| `url` | `string` | - | URL yêu cầu. |
+| `method` | `string` | `GET` | Phương thức HTTP. |
+| `data` | `any` | - | Dữ liệu yêu cầu. Yêu cầu `GET` và `HEAD` được serialize vào query string; phương thức khác ghi vào body yêu cầu. |
+| `headers` | `Record<string, string>` | `{}` | Header yêu cầu. |
+| `timeout` | `number` | - | Timeout tính bằng mili-giây. Chỉ có hiệu lực khi lớn hơn `0`. |
+| `dataType` | `'json' \| 'text' \| 'html' \| 'arrayBuffer'` | `json` | Chế độ parse phản hồi. |
+| `contentType` | `string` | `application/x-www-form-urlencoded; charset=UTF-8` | Content-Type body yêu cầu. |
+| `processData` | `boolean` | `true` | Có tự động serialize `data` không. Khi đặt `false`, `data` truyền trực tiếp làm body yêu cầu. |
+
+Giá trị trả về:
+
+| Trường | Kiểu | Mô tả |
+|---|---|---|
+| `ok` | `boolean` | `true` cho phản hồi HTTP 2xx; `false` cho lỗi parse, lỗi HTTP, timeout, abort hoặc lỗi mạng. |
+| `status` | `number` | Mã trạng thái HTTP. `0` nghĩa là timeout, abort hoặc thất bại lớp mạng. |
+| `statusText` | `string` | Văn bản trạng thái HTTP. Cho thất bại không phải HTTP, là `timeout`, `abort` hoặc `error`. |
+| `data` | `any` | Dữ liệu phản hồi đã parse. |
+| `error` | `string` | Thông báo lỗi cho thất bại parse hoặc thất bại không phải HTTP. |
+| `timeout` | `boolean` | `true` khi yêu cầu bị abort do timeout cấu hình. |
+
+Ví dụ GET:
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/profile',
+  method: 'GET',
+  dataType: 'json',
+  timeout: 10000
+});
+
+if (ret.ok) {
+  console.log(ret.data);
+}
+```
+
+Ví dụ POST:
+
+```js
+const ret = await api.http.ajax({
+  url: 'https://example.com/api/items',
+  method: 'POST',
+  contentType: 'application/json',
+  data: { name: 'demo' }
+});
+
+if (!ret.ok) {
+  console.warn(ret.status, ret.error || ret.statusText);
+}
+```
+
+## `api.user`
+
+`api.user` đọc và ghi dữ liệu liên quan user khi chạy script. Nó có thể cô lập phạm vi lưu trữ qua các chiều khác nhau.
+
+Tham số phổ biến:
+
+| Tham số | Kiểu | Mặc định | Mô tả |
+|---|---|---|---|
+| `site` | `boolean` | `false` | Có cô lập theo trang không |
+| `account` | `boolean` | `false` | Có cô lập theo tài khoản trang hoặc tên workspace không |
+| `did` | `boolean` | `false` | Có cô lập theo thiết bị không |
+
+Khuyến nghị chiều:
+
+| Tình huống | Khuyến nghị |
+|---|---|
+| Chia sẻ dữ liệu cho cùng user trên các trang | `site=false` |
+| Lưu dữ liệu độc lập cho mỗi trang | `site=true` |
+| Cô lập tài khoản khác nhau dưới cùng trang | `account=true` |
+| Cô lập cùng user trên thiết bị khác nhau | `did=true` |
+
+### `api.user.put()`
+
+Lưu cặp key-value.
+
+```ts
+put(
+  name: string,
+  value: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+Ví dụ:
+
+```js
+await api.user.put('token', 'abc123');
+await api.user.put('draft:lastOrderId', 'A-1001', true, true);
+```
+
+### `api.user.get()`
+
+Đọc key được chỉ định.
+
+```ts
+get(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ value: string | null, status: boolean }>
+```
+
+Ví dụ:
+
+```js
+const ret = await api.user.get('token');
+if (ret.status && ret.value) {
+  console.log(ret.value);
+}
+```
+
+### `api.user.remove()`
+
+Xóa key được chỉ định.
+
+```ts
+remove(
+  name: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean }>
+```
+
+Ví dụ:
+
+```js
+await api.user.remove('token');
+await api.user.remove('draft:lastOrderId', true, true);
+```
+
+### `api.user.incr()`
+
+Tăng giá trị số của key được chỉ định theo bước. Nếu key không tồn tại, nó được tạo.
+
+```ts
+incr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+Ví dụ:
+
+```js
+const ret = await api.user.incr('submitCount', 1, true);
+console.log(ret.value);
+```
+
+### `api.user.decr()`
+
+Giảm giá trị số của key được chỉ định theo bước. Nếu key không tồn tại, nó được tạo với giá trị ban đầu âm.
+
+```ts
+decr(
+  name: string,
+  step?: number,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<{ status: boolean, value: number | string }>
+```
+
+Ví dụ:
+
+```js
+const ret = await api.user.decr('remainingQuota', 1, true, true);
+console.log(ret.value);
+```
+
+### `api.user.startsWith()`
+
+Tìm dữ liệu theo tiền tố tên key.
+
+```ts
+startsWith(
+  prefix: string,
+  site?: boolean,
+  account?: boolean,
+  did?: boolean
+): Promise<Array<{ name: string, value: string }>>
+```
+
+Ví dụ:
+
+```js
+const items = await api.user.startsWith('cache:', true);
+for (const item of items) {
+  console.log(item.name, item.value);
+}
+```
+
+### `api.user.countAll()`
+
+Đếm bản ghi cho tên key được chỉ định.
+
+```ts
+countAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+Ví dụ:
+
+```js
+const ret = await api.user.countAll('token', true);
+console.log(ret.value);
+```
+
+### `api.user.sumAll()`
+
+Tính tổng số của giá trị cho tên key được chỉ định.
+
+```ts
+sumAll(
+  name: string,
+  site?: boolean,
+  account?: boolean
+): Promise<{ value: number, status: boolean }>
+```
+
+Ví dụ:
+
+```js
+const ret = await api.user.sumAll('score', true);
+console.log(ret.value);
+```
+
+## `api.dom`
+
+`api.dom` cung cấp truy vấn DOM, kiểm tra hiển thị, listener kết nối, listener resize và tạo overlay.
+
+Hỗ trợ Selector:
+
+| Cú pháp | Mô tả |
+|---|---|
+| `.button.primary` | CSS selector |
+| `xpath://div[@id="app"]` | XPath selector |
+| `.dialog:p` | Trả về phần tử cha của phần tử khớp |
+| `.dialog:p2` | Trả về tổ tiên hai cấp trên phần tử khớp |
+| `.header:bottom` | Dùng ranh giới dưới của phần tử trong phương pháp ranh giới overlay |
+| `.sidebar:right` | Dùng ranh giới phải của phần tử trong phương pháp ranh giới overlay |
+
+Xem thêm @sec-matchSelector.
+
+### `api.dom.createMutationObserver()`
+
+Tạo và cache `MutationObserver`. Nếu observer với cùng tên binding đã tồn tại trên phần tử mục tiêu, observer hiện có được trả về trực tiếp.
+
+```ts
+createMutationObserver(
+  ele: Element,
+  bindStr: string,
+  childList: boolean,
+  subtree: boolean,
+  attributes: boolean,
+  characterData: boolean,
+  fn: (mutations: MutationRecord[]) => void
+): MutationObserver
+```
+
+Ví dụ:
+
+```js
+api.dom.createMutationObserver(
+  document.body,
+  '__bodyObserver__',
+  true,
+  true,
+  false,
+  false,
+  (mutations) => console.log(mutations)
+);
+```
+
+### `api.dom.querySelector()`
+
+Truy vấn phần tử khớp đầu tiên.
+
+```ts
+querySelector(doc: Document, cssOrXPathSelector: string): HTMLElement | null
+```
+
+Ví dụ:
+
+```js
+const el = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+```
+
+### `api.dom.querySelectorAll()`
+
+Truy vấn tất cả phần tử khớp.
+
+```ts
+querySelectorAll(doc: Document, cssOrXPathSelector: string): HTMLElement[]
+```
+
+Ví dụ:
+
+```js
+const buttons = api.dom.querySelectorAll(document, 'button.primary');
+buttons.forEach((button) => console.log(button.textContent));
+```
+
+### `api.dom.isVisible()`
+
+Kiểm tra phần tử có ở khu vực giao điểm hiển thị không.
+
+```ts
+isVisible(ele: HTMLElement): Promise<boolean>
+```
+
+Ví dụ:
+
+```js
+const el = api.dom.querySelector(document, '.submit');
+if (el && await api.dom.isVisible(el)) {
+  console.log('visible');
+}
+```
+
+### `api.dom.getVisibleRect()`
+
+Lấy hình chữ nhật hiển thị hiện tại của phần tử.
+
+```ts
+getVisibleRect(ele: HTMLElement): Promise<DOMRectReadOnly>
+```
+
+Ví dụ:
+
+```js
+const el = api.dom.querySelector(document, '.panel');
+if (el) {
+  const rect = await api.dom.getVisibleRect(el);
+  console.log(rect.left, rect.top, rect.width, rect.height);
+}
+```
+
+### `api.dom.getConnectListeners()`
+
+Lấy danh sách listener kết nối hiện tại.
+
+```ts
+getConnectListeners(): Array<{
+  querySelector: string;
+  callback: (isConnected: boolean) => void;
+  isConnected?: boolean;
+}>
+```
+
+Ví dụ:
+
+```js
+api.dom.addConnectListener('.modal', () => {});
+console.log(api.dom.getConnectListeners());
+```
+
+### `api.dom.addConnectListener()`
+
+Lắng nghe phần tử xuất hiện trong hoặc biến mất khỏi document.
+
+```ts
+addConnectListener(
+  cssOrXPathSelector: string,
+  callback: (isConnected: boolean) => void
+): void
+```
+
+Ví dụ:
+
+```js
+api.dom.addConnectListener('.dialog', (isConnected) => {
+  console.log('dialog:', isConnected);
+});
+```
+
+### `api.dom.removeConnectListener()`
+
+Xóa listener kết nối cho selector được chỉ định.
+
+```ts
+removeConnectListener(cssOrXPathSelectors: string[]): void
+```
+
+Ví dụ:
+
+```js
+api.dom.removeConnectListener(['.dialog', '.toast']);
+```
+
+### `api.dom.addResizeListener()`
+
+Lắng nghe thay đổi kích thước và vị trí phần tử mục tiêu. Nếu phần tử không tồn tại, callback nhận hình chữ nhật rỗng.
+
+```ts
+addResizeListener(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  callback: (rect: DOMRect) => void,
+  createObserver?: boolean,
+  delayTime?: number
+): ResizeObserver | (() => void)
+```
+
+Ví dụ:
+
+```js
+api.dom.addResizeListener('.target', '__targetResize__', (rect) => {
+  console.log(rect.width, rect.height);
+});
+```
+
+### `api.dom.createOverlayBy()`
+
+Tạo overlay vị trí cố định theo dõi khu vực hiển thị của phần tử mục tiêu.
+
+```ts
+createOverlayBy(
+  cssOrXPathSelector: string,
+  bindWindowStr: string,
+  createObserver?: boolean,
+  delayTime?: number,
+  fn?: (rect: DOMRectReadOnly) => void
+): HTMLElement
+```
+
+Ví dụ:
+
+```js
+const overlay = api.dom.createOverlayBy('.target', '__overlay__');
+overlay.style.border = '2px solid #f00';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+### `api.dom.createOverlayByBorder()`
+
+Tạo overlay vị trí cố định từ ranh giới trên, phải, dưới, trái. Giá trị ranh giới có thể là số pixel hoặc selector.
+
+```ts
+createOverlayByBorder(
+  bindWindowStr: string,
+  top: string | number,
+  right: string | number,
+  bottom: string | number,
+  left: string | number,
+  createObserver?: boolean,
+  delayTime?: number
+): HTMLElement
+```
+
+Ví dụ:
+
+```js
+const panel = api.dom.createOverlayByBorder(
+  '__centerPanel__',
+  'header:bottom',
+  20,
+  'footer:top',
+  '.sidebar:right'
+);
+panel.style.background = 'rgba(0,0,0,.08)';
+```
+
+## `api.utils`
+
+`api.utils` cung cấp khả năng hỗ trợ phổ biến cho chờ điều kiện trang và thực thi mã trong ngữ cảnh trang.
+
+### `api.utils.wait()`
+
+Poll cho đến khi hàm điều kiện trả về giá trị truthy. Ném lỗi khi timeout.
+
+```ts
+wait(
+  fn: () => boolean,
+  timeoutMs: number,
+  intervalMs?: number
+): Promise<void>
+```
+
+Ví dụ:
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.ready'),
+  10000,
+  200
+);
+```
+
+### `api.utils.runScript()`
+
+Chạy mã JavaScript trong trang hiện tại và trả về kết quả.
+
+```ts
+runScript(
+  code: string,
+  callback?: (result: any, error: Error) => void
+): Promise<any>
+```
+
+Ví dụ:
+
+```js
+const title = await api.utils.runScript('document.title');
+console.log(title);
+```
+
+Dạng callback:
+
+```js
+await api.utils.runScript('document.body.innerText.slice(0, 100)', (result, error) => {
+  if (error) {
+    console.error(error);
+    return;
+  }
+  console.log(result);
+});
+```
+
+## `api.header()`
+
+`api.header(headerName, isRequestHeader)` đọc header yêu cầu hoặc phản hồi được ghi bởi trình duyệt từ xa.
+
+```ts
+header(
+  headerName: string,
+  isRequestHeader: boolean
+): Promise<string | string[] | undefined>
+```
+
+Tham số:
+
+| Tham số | Kiểu | Mô tả |
+|---|---|---|
+| `headerName` | `string` | Tên header yêu cầu hoặc phản hồi. Được chuyển thành chữ thường khi đọc |
+| `isRequestHeader` | `boolean` | `true` đọc header yêu cầu; `false` đọc header phản hồi |
+
+Ví dụ:
+
+```js
+const cookie = await api.header('cookie', true);
+const setCookie = await api.header('set-cookie', false);
+```
+
+Lưu ý:
+
+- Chỉ header yêu cầu hoặc phản hồi đã được thêm trong cấu hình trang mới được ghi.
+- Header yêu cầu đến từ yêu cầu do trình duyệt từ xa gửi.
+- Header phản hồi đến từ phản hồi do trình duyệt từ xa nhận.
+- Header phản hồi có thể trả về mảng chuỗi.
+
+## Kết hợp Script Phổ biến
+
+### Chờ Phần tử và Click Nó
+
+```js
+await api.utils.wait(
+  () => !!api.dom.querySelector(document, '.login-button'),
+  10000,
+  200
+);
+
+const button = api.dom.querySelector(document, '.login-button');
+button?.click();
+```
+
+### Tìm Nút Tiếng Anh Với XPath
+
+```js
+const submit = api.dom.querySelector(
+  document,
+  'xpath://button[contains(.,"Submit")]'
+);
+
+if (submit && await api.dom.isVisible(submit)) {
+  submit.click();
+}
+```
+
+### Lưu Trạng thái Trang
+
+```js
+const count = await api.user.incr('visitCount', 1, true, true);
+await api.user.put('lastTitle', document.title, true, true);
+
+console.log(count.value);
+```
+
+### Thêm Overlay Vào Khu vực Quan Tâm
+
+```js
+const overlay = api.dom.createOverlayBy('.customer-phone', '__phoneMask__');
+overlay.style.background = '#fff';
+overlay.style.pointerEvents = 'none';
+overlay.style.zIndex = '999999';
+```
+
+## Nguyên tắc Sử dụng
+
+Quản lý script như mã kinh doanh:
+
+- Giới hạn URL khớp để script không chạy trên trang không liên quan.
+- Đặt tên script rõ ràng để rollback và khắc phục sự cố.
+- Xác minh trước trên trang test hoặc tài khoản test.
+- Test hồi quy script phụ thuộc selector DOM.
+- Dùng tiền tố rõ ràng cho dữ liệu lưu trữ, như `cache:`, `draft:`, `state:`.
+- Đừng hard-code bí mật, token dài hạn hoặc mật khẩu tài khoản vào script.
+- Ghi lý do thay đổi script và code review khi cần.
+
+## Danh sách Kiểm tra Khắc phục Sự cố
+
+| Vấn đề | Kiểm tra gì |
+|---|---|
+| `api` không tồn tại | Xác nhận loại script có hỗ trợ `window.api` không; script SSE không nên phụ thuộc nó |
+| Phần tử không tìm thấy | Kiểm tra URL khớp, trang đã load xong, selector có thay đổi không |
+| XPath không hoạt động | Xác nhận tiền tố `xpath://` được dùng |
+| Header không đọc được | Thêm tên header yêu cầu hoặc phản hồi tương ứng trong cấu hình trang trước |
+| Dữ liệu user trộn lẫn giữa phạm vi | Kiểm tra tham số chiều `site`, `account`, `did` |
+| Vị trí overlay bất thường | Kiểm tra phần tử mục tiêu có hiển thị không và selector ranh giới có đúng không |
+| Script ảnh hưởng trang khác | Thu hẹp URL khớp hoặc thêm kiểm tra điều kiện trang ở đầu script |

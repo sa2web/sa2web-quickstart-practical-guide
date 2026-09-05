@@ -1,0 +1,35 @@
+# よくある質問とトラブルシューティング
+
+## 管理コンソールが開けない
+
+```bash
+docker compose ps
+docker compose logs --tail 200
+```
+
+ドメイン、ポート80/443、証明書、アプリケーションログを確認。
+
+## ユーザーがSaaSサイトを見られない
+
+順番に確認：サイトステータス -> ユーザーグループ -> SaaSサイト認可 -> アカウントタイプ。
+
+## ユーザーがワークスペースを見られない
+
+グループ内のワークスペース認可を確認。
+
+## 内部サイトが開けない
+
+1. まずターゲットURLがSa2webブラウザノードのあるネットワークから到達可能か確認、次にDNS、ルート、ファイアウォール、ACLを確認。
+2. グループ内の内部サイト認可を確認。
+
+## MCPが接続できない
+
+Node.js、 `@sa2web/mcp`、Playwright、 `SA2_LOGIN_URL`、clientId/clientSecret、エージェント権限、HTTPSを確認。
+
+## Passkeyが失敗する
+
+ターゲットドメイン、HTTPS信頼、ブラウザオリジン、Passkeyバインド状態、ターゲットサイト互換性をまず確認。
+
+公式ドキュメント：
+
+- https://www.sa2web.com/docs/en/operations/troubleshooting

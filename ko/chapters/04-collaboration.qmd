@@ -1,0 +1,99 @@
+# 협업 링크 활성화
+
+## 목표
+
+임시 사용자, 계약자, 고객을 위한 제어된 접근 링크를 생성하여 일반 계정 없이 지정된 사이트에 접근할 수 있도록 합니다.
+
+## 협업 콘텐츠 생성
+
+다음으로 이동:
+
+```text
+협업 콘텐츠 관리 > 협업 콘텐츠 목록
+```
+
+@fig-create-collaboration-content에 표시된 대로 협업 콘텐츠 컬렉션을 생성하고 컬렉션 번호, 제목, 유효 기간을 입력합니다.
+
+![Sa2web 협업 컬렉션 생성](/images/create-collaboration-content.png){#fig-create-collaboration-content}
+
+"![](/images/plus.png){width=20px}" 버튼을 클릭하여 협업 SaaS 사이트와 사이트 계정 카테고리를 추가합니다. @fig-add-collaboration-content 참조. 하나의 협업 콘텐츠 컬렉션에 여러 사이트 계정 카테고리를 포함할 수 있습니다.
+
+![Sa2web 협업 SaaS 사이트 추가](/images/add-collaboration-content.png){#fig-add-collaboration-content}
+
+협업 콘텐츠 목록은 @fig-collaboration-content-list에 표시됩니다.
+
+![Sa2web 협업 콘텐츠 목록](/images/collaboration-content-list.png){#fig-collaboration-content-list}
+
+## 표준 협업 링크 생성
+
+다음으로 이동:
+
+```text
+협업 콘텐츠 관리 > 협업 링크 목록
+```
+
+"![](/images/add-collaboration-url.png){width=80px}" 버튼을 클릭하여 협업 링크 추가 대화상자를 엽니다. @fig-add-collaboration-url-dialog 참조.
+
+대화상자에서 선택합니다:
+
+- 협업 콘텐츠 컬렉션.
+- 브라우저 인스턴스.
+- 처음 열 협업 사이트.
+- 협업 사이트 경로 (`/`로 시작해야 함).
+- 협업 접근 비밀번호 활성화 여부.
+
+![Sa2web 협업 링크 추가](/images/add-collaboration-url-dialog.png){#fig-add-collaboration-url-dialog}
+
+추가 후 링크가 협업 링크 목록에 나타납니다. @fig-collaboration-url-list 참조.
+
+![Sa2web 협업 링크 목록](/images/collaboration-url-list.png){#fig-collaboration-url-list}
+
+목록에서 "![](/images/link.png){width=20px}" 버튼을 클릭하여 협업 링크를 클립보드에 복사합니다. 그런 다음 임시 사용자, 계약자, 고객에게 보낼 수 있습니다.
+
+"![](/images/key.png){width=20px}" 버튼을 클릭하여 비밀번호 접근을 활성화하고 링크의 비밀번호를 확인합니다. 임시 사용자가 링크를 열면 계속하기 위해 비밀번호를 입력해야 합니다. @fig-collaboration-url-password 참조.
+
+![Sa2web 비밀번호 입력 있는 협업 링크](/images/collaboration-url-password.png){#fig-collaboration-url-password}
+
+"![](/images/unlock.png){width=20px}" 버튼을 클릭하여 비밀번호 접근을 비활성화합니다.
+
+표준 협업 링크 형식:
+
+```text
+https://<APP_DOMAIN>/url/<uid>
+```
+
+표준 협업 링크는 단일 사용자, 일회성 접근, 소규모 배포에 적합합니다.
+
+## 슈퍼 협업 링크
+
+하나의 링크가 동시에 또는 배치로 여러 사용자의 접근을 지원해야 하는 경우 슈퍼 협업 링크를 사용합니다:
+
+```text
+https://<APP_DOMAIN>/urls/<collSn>
+```
+
+협업 링크 목록에서 "![](/images/super-collaboration-url.png){width=90px}" 버튼을 클릭하여 슈퍼 협업 링크 페이지를 엽니다.
+
+**추가**를 클릭하여 슈퍼 협업 링크 추가 대화상자를 엽니다. @fig-add-super-collaboration-url 참조. 다음을 구성할 수 있습니다:
+
+- 협업 콘텐츠 컬렉션.
+- 접근이 허용된 협업 사용자 수.
+- 처음 열 협업 사이트.
+- 협업 사이트 경로 (`/`로 시작해야 함).
+- 협업 접근 비밀번호 활성화 여부.
+
+![Sa2web 슈퍼 협업 링크 추가](/images/add-super-collaboration-url-dialog.png){#fig-add-super-collaboration-url}
+
+추가 후 링크가 슈퍼 협업 링크 목록에 나타납니다. @fig-super-collaboration-url-list 참조.
+
+![Sa2web 슈퍼 협업 링크 목록](/images/super-collaboration-url-list.png){#fig-super-collaboration-url-list}
+
+슈퍼 협업 링크는 대량 배포, 고객 배송, 이벤트 등 유사 시나리오에 적합합니다.
+
+## 게시 전 체크리스트
+
+- [ ] 링크가 정상적으로 열림.
+- [ ] 필요한 사이트만 노출됨.
+- [ ] 계정 유형이 정확함.
+- [ ] 비밀번호 접근 정책이 현재 시나리오에 적합함.
+- [ ] 만료 시간과 허용된 사용자 수가 정확함.

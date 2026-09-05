@@ -1,0 +1,99 @@
+# コラボレーションリンクの有効化
+
+## 目標
+
+一時ユーザー、契約業者、顧客向けに制御されたアクセスリンクを生成し、通常のアカウントを持たずに指定されたサイトにアクセスできるようにします。
+
+## コラボレーションコンテンツの作成
+
+以下に移動：
+
+```text
+コラボレーションコンテンツ管理 > コラボレーションコンテンツ一覧
+```
+
+@fig-create-collaboration-contentに示すようにコラボレーションコンテンツコレクションを作成し、コレクション番号、タイトル、有効期間を入力。
+
+![Sa2webコラボレーションコレクション作成](/images/create-collaboration-content.png){#fig-create-collaboration-content}
+
+"![](/images/plus.png){width=20px}" ボタンをクリックしてコラボレーションSaaSサイトとサイトアカウントカテゴリを追加。@fig-add-collaboration-contentを参照。1つのコラボレーションコンテンツコレクションに複数のサイトアカウントカテゴリを含められます。
+
+![Sa2webコラボレーションSaaSサイト追加](/images/add-collaboration-content.png){#fig-add-collaboration-content}
+
+コラボレーションコンテンツ一覧は@fig-collaboration-content-listに表示。
+
+![Sa2webコラボレーションコンテンツ一覧](/images/collaboration-content-list.png){#fig-collaboration-content-list}
+
+## 標準コラボレーションリンクの作成
+
+以下に移動：
+
+```text
+コラボレーションコンテンツ管理 > コラボレーションリンク一覧
+```
+
+"![](/images/add-collaboration-url.png){width=80px}" ボタンをクリックしてコラボレーションリンク追加ダイアログを開く。@fig-add-collaboration-url-dialogを参照。
+
+ダイアログで選択：
+
+- コラボレーションコンテンツコレクション。
+- ブラウザインスタンス。
+- 最初に開くコラボレーションサイト。
+- コラボレーションサイトパス（`/` で始まる必要あり）。
+- コラボレーションアクセスパスワードを有効にするかどうか。
+
+![Sa2webコラボレーションリンク追加](/images/add-collaboration-url-dialog.png){#fig-add-collaboration-url-dialog}
+
+追加後、リンクがコラボレーションリンク一覧に表示。@fig-collaboration-url-listを参照。
+
+![Sa2webコラボレーションリンク一覧](/images/collaboration-url-list.png){#fig-collaboration-url-list}
+
+一覧で "![](/images/link.png){width=20px}" ボタンをクリックしてコラボレーションリンクをクリップボードにコピー。その後、一時ユーザー、契約業者、顧客に送信可能。
+
+"![](/images/key.png){width=20px}" ボタンをクリックしてパスワードアクセスを有効化し、リンクのパスワードを表示。一時ユーザーがリンクを開くと、継続するためにパスワード入力が必要。@fig-collaboration-url-passwordを参照。
+
+![Sa2webパスワード入力付きコラボレーションリンク](/images/collaboration-url-password.png){#fig-collaboration-url-password}
+
+"![](/images/unlock.png){width=20px}" ボタンをクリックしてパスワードアクセスを無効化。
+
+標準コラボレーションリンク形式：
+
+```text
+https://<APP_DOMAIN>/url/<uid>
+```
+
+標準コラボレーションリンクは、1ユーザー、1回限りのアクセス、小規模配布に適しています。
+
+## スーパーコラボレーションリンク
+
+1つのリンクで複数のユーザーが同時に、またはバッチでアクセスする必要がある場合、スーパーコラボレーションリンクを使用：
+
+```text
+https://<APP_DOMAIN>/urls/<collSn>
+```
+
+コラボレーションリンク一覧で "![](/images/super-collaboration-url.png){width=90px}" ボタンをクリックしてスーパーコラボレーションリンクページを開く。
+
+**追加** をクリックしてスーパーコラボレーションリンク追加ダイアログを開く。@fig-add-super-collaboration-urlを参照。以下を設定可能：
+
+- コラボレーションコンテンツコレクション。
+- アクセスを許可するコラボレーションユーザー数。
+- 最初に開くコラボレーションサイト。
+- コラボレーションサイトパス（`/` で始まる必要あり）。
+- コラボレーションアクセスパスワードを有効にするかどうか。
+
+![Sa2webスーパーコラボレーションリンク追加](/images/add-super-collaboration-url-dialog.png){#fig-add-super-collaboration-url}
+
+追加後、リンクがスーパーコラボレーションリンク一覧に表示。@fig-super-collaboration-url-listを参照。
+
+![Sa2webスーパーコラボレーションリンク一覧](/images/super-collaboration-url-list.png){#fig-super-collaboration-url-list}
+
+スーパーコラボレーションリンクは、大量配布、顧客納品、イベント、類似シナリオに適しています。
+
+## 公開前チェックリスト
+
+- [ ] リンクが正常に開く。
+- [ ] 必要なサイトのみが公開されている。
+- [ ] アカウントタイプが正しい。
+- [ ] パスワードアクセスポリシーが現在のシナリオに適合。
+- [ ] 有効期限と許可ユーザー数が正しい。
